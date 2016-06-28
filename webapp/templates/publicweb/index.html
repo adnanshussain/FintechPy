@@ -1,0 +1,59 @@
+{% extends 'publicweb/layout.html' %}
+{% block body %}
+<div class="ui two column centered grid">
+	<div class="ui horizontal divider">
+		Featured Insight
+	</div>
+	<div class="column">
+		<a href="{{ url_for('publicweb.q1_aggregate', setid=1, direction='up', percent=5, from_yr=1993, to_yr=2016) }}">
+			<div class="ui segment raised circular red fintech_featured_insight">
+				<span class="ui header">When was the last time SABIC was up by 7% in the past 10 years ?</span>
+			</div>
+		</a>
+	</div>
+	<div class="ui horizontal divider">
+		More Insights
+	</div>
+	<div class="three column row">
+		<div class="column">
+			<a class="ui segment black circular fintech_insight" href="#">
+				<span class="ui orange header">How many times did SABIC crash in 2015?</span>
+			</a>
+		</div>
+		<div class="column">
+			<a class="ui segment black circular fintech_insight" href="#">
+				<span class="ui orange header">What was the performance of SABB Bank after Donald Trump's speech?</span>
+			</a>
+		</div>
+		<div class="column">
+			<a class="ui segment black circular fintech_insight" href="#">
+				<span class="ui orange header">What was the performance of SABIC after "Earning Announcements" in the past 5 years?</span>
+			</a>
+		</div>
+	</div>
+	<div class="three column row">
+		<div class="column">
+			<a href="q2_aggregate.html">
+				<div class="ui segment green fintech_insight">
+					<span class="ui green ribbon label">Trending</span>
+					<span class="ui orange header">Which companies were up by more than 70% in the past 2 years?</span>
+				</div>
+			</a>
+		</div>
+		<div class="column">
+			<a href="#">
+				<div class="ui segment black fintech_insight">
+					<span class="ui orange header">What was the performance of Al-Ain before and after 2015 Ramadaan?</span>
+				</div>
+			</a>
+		</div>
+		<div class="column">
+			<a href="#">
+				<div class="ui segment black fintech_insight">
+					<span class="ui orange header">What was the performance of SABIC after "Earning Announcements" in the past 5 years?</span>
+				</div>
+			</a>
+		</div>
+	</div>
+</div>
+{% endblock %}

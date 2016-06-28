@@ -1,0 +1,13 @@
+.idea 
+webapp/static/vendor/jquery.powertip-1.2.0/
+node_modules/
+webapp/__pycache__/
+webapp/data/
+webapp/static/vendor/amcharts/
+webapp/static/vendor/semantic/dist/
+webapp/static/vendor/semantic/gulpfile.js
+webapp/static/vendor/semantic/src/definitions/
+webapp/static/vendor/semantic/src/semantic.less
+webapp/static/vendor/semantic/src/theme.less
+webapp/static/vendor/semantic/src/themes/
+webapp/static/vendor/semantic/tasks/

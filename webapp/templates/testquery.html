@@ -1,0 +1,23 @@
+{% extends 'publicweb/layout.html' %}
+{% block body %}
+<div id="result">
+
+</div>
+{% endblock %}
+{% block page_js %}
+<script type="text/javascript">
+	$(function() {
+		$.ajax('{{ url_for('api.testapi') }}', {
+        	cache: false,
+        	success: function (data, status, xhrObj) {
+            	console.log("ajax success");
+            	$('#result').html(JSON.stringify(data));
+        	},
+        	error: function (xhrObj, status, errorThrown) {
+            	console.log(errorThrown);
+        	}
+    	});
+	});
+
+</script>
+{% endblock %}

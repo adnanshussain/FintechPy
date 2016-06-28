@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Argaam Fintech - {{ title }}</title>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/semantic/dist/semantic.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/jquery.powertip-1.2.0/css/jquery.powertip.css') }}">
+</head>
+<body>
+<div class="ui container">
+    <div class="ui inverted menu">
+        <a class="item" href="{{ url_for('publicweb.index') }}">
+            <span class="ui orange header">Argaam</span>&nbsp;Fintech
+        </a>
+    </div>
+	{% block body %}
+	{% endblock %}
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="{{ url_for('static', filename='vendor/jquery.powertip-1.2.0/jquery.powertip.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/semantic/dist/semantic.js') }}"></script>
+{% block page_js %}
+{% endblock %}
+</body>
+</html>
