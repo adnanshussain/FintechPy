@@ -164,7 +164,10 @@ def __check_and_create_table_with_change_percentage(setid, from_yr, to_yr, conn)
 ###############################
 ###  Fintech Query Funtions ###
 ###############################
-def get_number_of_times_stockentities_that_were_upordown_bypercent_in_year_range(setid, percent, from_yr, to_yr, filter_by_sector=None):
+def get_number_of_times_stockentities_that_were_upordown_bypercent_in_year_range(setid, direction, percent, from_yr, to_yr,
+                                                                                 order_by_direction="desc",
+                                                                                 top_n=10,
+                                                                                 filter_by_sector=None):
     conn = __get_open_db_connection(use_row_factory=False, register_udfs=True)
 
     __check_and_create_table_with_change_percentage(setid, from_yr, to_yr, conn)
@@ -176,10 +179,12 @@ def get_number_of_times_stockentities_that_were_upordown_bypercent_in_year_range
             where yr >= ? and yr <= ?
                 and change_percentage {cond} ?
             group by t1.StockEntityID
-            order by frequency {order_by_direction};
-          """.format(TN_SEP_WITH_CHANGE_PERCENTAGE, cond=(">=" if percent >= 0 else "<="), order_by_direction="desc")
+            order by frequency {order_by_direction}
+            LIMIT ?;
+          """.format(TN_SEP_WITH_CHANGE_PERCENTAGE, cond=(">=" if direction == 'above' else "<"),
+                     order_by_direction=order_by_direction)
 
-    cursor = conn.execute(sql, (setid, from_yr, to_yr, percent))
+    cursor = conn.execute(sql, (setid, from_yr, to_yr, percent, top_n))
 
     result = [dict(seid=r[0],short_name_en=r[1],frequency=r[2]) for r in cursor.fetchall()]
 

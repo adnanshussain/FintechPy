@@ -16,9 +16,13 @@
 	{% block body %}
 	{% endblock %}
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-<script src="{{ url_for('static', filename='vendor/jquery.powertip-1.2.0/jquery.powertip.js') }}"></script>
-<script src="{{ url_for('static', filename='vendor/semantic/dist/semantic.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='vendor/jquery.powertip-1.2.0/jquery.powertip.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='vendor/semantic/dist/semantic.js') }}" type="text/javascript"></script>
+
+<script src="{{ url_for('static', filename='vendor/amcharts/amcharts.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='vendor/amcharts/serial.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='vendor/amcharts/plugins/dataloader/dataloader.min.js') }}" type="text/javascript"></script>
 {% block page_js %}
 {% endblock %}
 </body>
