@@ -80,6 +80,7 @@
 				</div>
 				<div class="ui bottom attached tab segment active" data-tab="visual">
 					<div id="chartdiv" style="height: 500px; width: 100%"></div>
+					<div id="curtain"><span>Chart is loading...</span></div>
 				</div>
 				<div class="ui bottom attached tab segment" data-tab="textual" id="text_result">
 				</div>
@@ -113,40 +114,40 @@
 	});
 
 	function askQuestion() {
-		debugger;
 		setid = $('#stock_entity_type').val();
 		direction = $('input[name=direction]:checked').val()
 		percent = $('#percentage').val()
 		from_yr = $('#from_yr').val()
 		to_yr = $('#to_yr').val()
 
-		redrawChart(setid, direction, percent, from_yr, to_yr, 'desc', 10, true);
+		drawChart(setid, direction, percent, from_yr, to_yr, 'desc', 10, true, true);
 	}
 
 	var chart;
 
-	function redrawChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart) {
+	function drawChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart, redraw = false) {
 		$.ajax('{{ url_for('api.q1_aggregate') }}' + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr
 						+ '/' + sort_order + '/' + top_n, {
-			/*data: {
-				setid: setid,
-				direction: direction,
-				percent: percent,
-				from_yr: from_yr,
-				to_yr: to_yr,
-				sort_order: sort_order,
-				top_n: top_n
-			},*/
         	cache: false,
         	success: function (data, status, xhrObj) {
-            	console.log("ajax success");
+            	console.log("ajax success, data received.", data);
 
-            	chart.dataProvider = data;
+				data_1 = data.slice(0, data.length - 1)
+
+            	chart.dataProvider = data_1;
 				chart.titles = [{
 					"text": "Number of times " + $('#stock_entity_type option:selected').text()
 							+ " where " + direction + " " + percent + "% from " + from_yr + " to " + to_yr
 				}];
-            	chart.validateData()
+				chart.valueAxes[0].guides[0].value = data[data.length - 1];
+
+				if(redraw) {
+            		chart.validateData()
+            	}
+            	else {
+					// WRITE
+					chart.write("chartdiv");
+				}
         	},
         	error: function (xhrObj, status, errorThrown) {
             	console.log(errorThrown);
@@ -158,11 +159,13 @@
 		AmCharts.ready(function () {
 			// SERIAL CHART
 			chart = new AmCharts.AmSerialChart();
+			/*
 			chart.dataLoader = {
 				"url": "{{ url_for('api.q1_aggregate') }}" + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr
 						+ '/' + sort_order + '/' + top_n,
 				"format": "json"
 			};
+			*/
 			chart.categoryField = "short_name_en";
 			chart.startDuration = 1;
 			chart.plotAreaBorderColor = "#DADADA";
@@ -174,6 +177,10 @@
 			}],
 			// this single line makes the chart a bar chart
 			chart.rotate = true;
+			chart.addListener("rendered", function(e) {
+      			var curtain = document.getElementById("curtain");
+      			curtain.parentElement.removeChild(curtain);
+    		});
 
 			// AXES
 			// Category
@@ -235,8 +242,7 @@
 
 			chart.creditsPosition = "top-right";
 
-			// WRITE
-			chart.write("chartdiv");
+			drawChart(setid, direction, percent, from_yr, to_yr, 'desc', 10, true, false);
 		});
 	}
 </script>

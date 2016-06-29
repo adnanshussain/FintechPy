@@ -188,6 +188,10 @@ def get_number_of_times_stockentities_that_were_upordown_bypercent_in_year_range
 
     result = [dict(seid=r[0],short_name_en=r[1],frequency=r[2]) for r in cursor.fetchall()]
 
+    average = sum(d['frequency'] for d in result) / len(result)
+
+    result.append(average)
+
     __close_db_connection(conn)
 
     return result
