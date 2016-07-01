@@ -7,7 +7,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 ### Custom Configs          ###
 ###############################
 DB_PATH = os.path.join(basedir, 'data/argaam_fintech.db')
-HOST = None #"0.0.0.0"
+HOST = "0.0.0.0" # None
 
 class NonASCIIJSONEncoder(json.JSONEncoder):
     def __init__(self, **kwargs):

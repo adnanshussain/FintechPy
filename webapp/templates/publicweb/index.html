@@ -5,9 +5,9 @@
 		Featured Insight
 	</div>
 	<div class="column">
-		<a href="{{ url_for('publicweb.q1_aggregate', setid=1, direction='above', percent=5, from_yr=1993, to_yr=2016) }}">
+		<a href="{{ url_for('publicweb.q1_aggregate', setid=1, direction='above', percent=5, from_yr=2006, to_yr=2016) }}">
 			<div class="ui segment raised circular red fintech_featured_insight">
-				<span class="ui header">When was the last time SABIC was up by 7% in the past 10 years ?</span>
+				<span class="ui header">How many times were Saudi Companies above 5% in the past 10 years?</span>
 			</div>
 		</a>
 	</div>
@@ -16,7 +16,8 @@
 	</div>
 	<div class="three column row">
 		<div class="column">
-			<a class="ui segment black circular fintech_insight" href="#">
+			<a class="ui segment black circular fintech_insight"
+			   href="{{ url_for('publicweb.q1_individual', setid=1, seid=77, direction='above', percent=5, from_yr=1993, to_yr=2016) }}">
 				<span class="ui orange header">How many times did SABIC crash in 2015?</span>
 			</a>
 		</div>

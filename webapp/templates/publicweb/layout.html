@@ -9,20 +9,25 @@
 <body>
 <div class="ui container">
     <div class="ui inverted menu">
-        <a class="item" href="{{ url_for('publicweb.index') }}">
+        <a class="item" href="{{ url_for('publicweb.all_questions') }}">
             <span class="ui orange header">Argaam</span>&nbsp;Fintech
         </a>
     </div>
 	{% block body %}
 	{% endblock %}
 </div>
+<!-- jQuery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js" type="text/javascript"></script>
+<!-- jQuery Powertip -->
 <script src="{{ url_for('static', filename='vendor/jquery.powertip-1.2.0/jquery.powertip.js') }}" type="text/javascript"></script>
+<!-- Semantic UI -->
 <script src="{{ url_for('static', filename='vendor/semantic/dist/semantic.js') }}" type="text/javascript"></script>
-
+<!-- AmCharts -->
 <script src="{{ url_for('static', filename='vendor/amcharts/amcharts.js') }}" type="text/javascript"></script>
 <script src="{{ url_for('static', filename='vendor/amcharts/serial.js') }}" type="text/javascript"></script>
 <script src="{{ url_for('static', filename='vendor/amcharts/plugins/dataloader/dataloader.min.js') }}" type="text/javascript"></script>
+<!-- Fintech Webapp JS -->
+<script src="{{ url_for('static', filename='js/fintech_webapp.js') }}" type="text/javascript"></script>
 {% block page_js %}
 {% endblock %}
 </body>

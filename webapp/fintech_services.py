@@ -1,11 +1,33 @@
 import sqlite3, datetime
 from . import config
 
+import cProfile
+
 STOCK_ENTITY_TYPES = dict(
     company = 1,
     market = 2,
-    sector = 3
+    sector = 3,
+    commodities = 5
 )
+
+def profile_code(method):
+    def wrapper(*args, **kw):
+        import cProfile, pstats, io
+        pr = cProfile.Profile()
+        pr.enable()
+
+        result = method(*args, **kw)
+
+        pr.disable()
+        # s = io.StringIO()
+        # sortby = 'cumulative'
+        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps = pstats.Stats(pr)
+        ps.print_stats()
+        # print(s.getvalue())
+
+        return result
+    return wrapper
 
 ###############################
 ### Table Names             ###
@@ -74,6 +96,16 @@ def get_all_sectors():
     return [dict(id=r[0], name_en=r["NameEn"], name_ar=r["NameAr"], short_name_en=r["ShortNameEn"]) for r in
             __fetch_all("select * from StockEntities where StockEntityTypeID = ?", (STOCK_ENTITY_TYPES["sector"],))]
 
+def get_all_companies():
+    # TODO: This method can be refactored to have one single method get_all_stock_entites_by_type
+    return [dict(id=r[0], name_en=r["NameEn"], name_ar=r["NameAr"], short_name_en=r["ShortNameEn"]) for r in
+            __fetch_all("select * from StockEntities where StockEntityTypeID = ?", (STOCK_ENTITY_TYPES["company"],))]
+
+def get_company(company_id):
+    return [dict(id=r[0], name_en=r["NameEn"], name_ar=r["NameAr"], short_name_en=r["ShortNameEn"]) for r in
+            __fetch_all("select * from StockEntities where StockEntityTypeID = ? and StockEntityID = ?",
+                        (STOCK_ENTITY_TYPES["company"], company_id))][0]
+
 ##################################
 ### Fintech Specific Functions ###
 ##################################
@@ -94,6 +126,8 @@ def __create_table_with_change_percentage(sep_current_count, conn):
         """.format(TN_SEP_WITH_CHANGE_PERCENTAGE + "_ROWIDS")
     conn.execute(sql)
 
+    # TODO: Drop the index on SEPWCP on StockEntityID column
+
     # Now using the rowid compute the change percentage
     sql = """
         create table {0}
@@ -111,6 +145,9 @@ def __create_table_with_change_percentage(sep_current_count, conn):
             """.format(TN_SEP_WITH_CHANGE_PERCENTAGE, ttn=(TN_SEP_WITH_CHANGE_PERCENTAGE + "_ROWIDS"))
 
     conn.execute(sql)
+
+    # TODO: Drop the SEPWCP_ROWIDS Table, it's an intermediary table
+    # TODO: Create the index on SEPWCP on StockEntityID column
 
 def __check_and_create_table_with_change_percentage(setid, from_yr, to_yr, conn):
     try:
@@ -164,6 +201,7 @@ def __check_and_create_table_with_change_percentage(setid, from_yr, to_yr, conn)
 ###############################
 ###  Fintech Query Funtions ###
 ###############################
+# @profile_code
 def get_number_of_times_stockentities_that_were_upordown_bypercent_in_year_range(setid, direction, percent, from_yr, to_yr,
                                                                                  order_by_direction="desc",
                                                                                  top_n=10,
@@ -184,43 +222,51 @@ def get_number_of_times_stockentities_that_were_upordown_bypercent_in_year_range
           """.format(TN_SEP_WITH_CHANGE_PERCENTAGE, cond=(">=" if direction == 'above' else "<"),
                      order_by_direction=order_by_direction)
 
+    percent = percent * -1 if direction == 'below' else percent
+
+    # prof = cProfile.Profile()
+    # cursor = prof.runcall(conn.execute, sql, (setid, from_yr, to_yr, percent, top_n))
+    # prof.print_stats()
+
     cursor = conn.execute(sql, (setid, from_yr, to_yr, percent, top_n))
 
-    result = [dict(seid=r[0],short_name_en=r[1],frequency=r[2]) for r in cursor.fetchall()]
+    main_data = [dict(seid=r[0],short_name_en=r[1],frequency=r[2]) for r in cursor.fetchall()]
+    result = { 'main_data': main_data }
 
-    average = sum(d['frequency'] for d in result) / len(result)
+    try:
+        average = sum(d['frequency'] for d in main_data) / len(main_data)
+    except:
+        average = 0
 
-    result.append(average)
+    result['average'] = average
 
     __close_db_connection(conn)
 
     return result
 
-def q1_stockentity_was_upordown_bysomepercent_induration(setid, seid, cp, from_yr, to_yr):
-    '''
-        Gets the list of dates when a Stock Entity(ies) was/were up or down by a given percentage within
-        the specified time duration
-    '''
-
+def get_number_of_times_a_single_stockentity_was_upordown_bypercent_in_year_range(setid, seid, direction, percent,
+                                                                                  from_yr, to_yr):
     conn = __get_open_db_connection(use_row_factory=False, register_udfs=True)
 
-    temp_table_name = __get_temp_table_name(setid, seid)
+    __check_and_create_table_with_change_percentage(setid, from_yr, to_yr, conn)
 
-    __create_temp_table_with_closing_percentage(setid, seid, from_yr, to_yr, temp_table_name, conn)
+    sql = """select
+                yr, count(0) frequency
+                from {0}
+                where
+                yr >= ? and yr <= ?
+                and change_percentage {cond} ?
+                and StockEntityTypeID = ?
+                and StockEntityID = ?
+                group by yr
+            """.format(TN_SEP_WITH_CHANGE_PERCENTAGE, cond=(">=" if direction == 'above' else "<"))
 
-    cursor = conn.execute("""select
-                            *
-                            from {0}
-                            where
-                            yr >= ? and yr <= ?
-                            and change_percentage {cond} ?;
-                        """.format(temp_table_name, cond=(">=" if cp >= 0 else "<=")), (from_yr, to_yr, cp))
+    percent = percent * -1 if direction == 'below' else percent
 
-    if config.DEBUG:
-        for r in cursor:
-            print(r)
+    cursor = conn.execute(sql, (from_yr, to_yr, percent, setid, seid))
 
-    result = [dict(seid=r[0],fordate=r[1],year=r[2],dow=r[3],closing_price=r[4],change_percentage=r[5]) for r in cursor.fetchall()]
+    result = { 'main_data': [dict(year=r[0], frequency=r[1]) for r in cursor.fetchall()],
+               'company_name_ar': [x for x in get_all_companies() if x['id'] == seid ][0]['name_ar']}
 
     __close_db_connection(conn)
 

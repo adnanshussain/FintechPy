@@ -14,6 +14,16 @@ def q1_aggregate(setid, direction, percent, from_yr, to_yr, sort_order, top_n):
                                                                                                       from_yr, to_yr,
                                                                                                       sort_order, top_n))
 
+@__api.route('/q1/individual') # TODO: Only used for url_for in the makeChart JS, need to fix an alternative
+@__api.route('/q1/individual/<int:setid>/<int:seid>/<direction>/<percent>/<int:from_yr>/<int:to_yr>')
+def q1_individual(setid, seid, direction, percent, from_yr, to_yr):
+    result = flask.jsonify(fintech_services.
+                         get_number_of_times_a_single_stockentity_was_upordown_bypercent_in_year_range(setid, seid,
+                                                                                                       direction,
+                                                                                                      float(percent),
+                                                                                                      from_yr, to_yr))
+    return result
+
 @__api.route("/test")
 def testapi():
     # resp = flask.Response()

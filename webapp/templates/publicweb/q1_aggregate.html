@@ -63,7 +63,17 @@
 					</div>
 					<div class="row">
 						<div class="column">
-							<button class="ui grey button" id="reverse_the_order">Reverse Order</button>
+							<label>Top N: </label>
+							<select class="ui compact search dropdown" id="top_n">
+								{% for i in range(10, 100, 10) %}
+								<option value="{{ i }}" {% if i == 10 %} selected="selected" {% endif %}>{{ i }}</option>
+								{% endfor %}
+							</select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="column">
+							<button class="ui grey button" id="reverse_the_order" data-fintech="desc">Reverse Order</button>
 						</div>
 					</div>
 					<div class="row">
@@ -88,6 +98,7 @@
 		</div>
 	</div>
 </div>
+
 <div id="myToolTip" style="display: none;">
     <p><b>Help</b></p>
     <p>This will reverse the order of the graph from what is currently shown.<br/>
@@ -108,38 +119,56 @@
             mouseOnToPopup: true
         });
 
-        makeChart({{ setid }}, '{{ direction }}', {{ percent }}, {{ from_yr }}, {{ to_yr }}, '{{ sort_order }}', {{ top_n }}, true);
-
         $('#ask_question').on('click', askQuestion);
+        $('#top_n').on('change', askQuestion);
+        $('#reverse_the_order').on('click', function() {
+        	curr_val = $('#reverse_the_order').data("fintech")
+        	if(curr_val == 'desc')
+        		$('#reverse_the_order').data("fintech", 'asc');
+        	else
+        		$('#reverse_the_order').data("fintech", 'desc');
+
+        	askQuestion();
+        });
+
+        buildChart();
+
+        p = getQuestionParameters();
+
+        drawChart(p.setid, p.direction, p.percent, p.from_yr, p.to_yr, p.sort_order, p.top_n);
 	});
 
-	function askQuestion() {
-		setid = $('#stock_entity_type').val();
-		direction = $('input[name=direction]:checked').val()
-		percent = $('#percentage').val()
-		from_yr = $('#from_yr').val()
-		to_yr = $('#to_yr').val()
-
-		drawChart(setid, direction, percent, from_yr, to_yr, 'desc', 10, true, true);
+	function getQuestionParameters() {
+		return({
+			setid: $('#stock_entity_type').val(),
+			direction: $('input[name=direction]:checked').val(),
+			percent: $('#percentage').val(),
+			from_yr: $('#from_yr').val(),
+			to_yr: $('#to_yr').val(),
+			sort_order: $('#reverse_the_order').data("fintech"),
+			top_n: $('#top_n').val()
+		});
 	}
 
+	function askQuestion() {
+		p = getQuestionParameters();
+
+		drawChart(p.setid, p.direction, p.percent, p.from_yr, p.to_yr, p.sort_order, p.top_n, true, true);
+	}
+
+	// The chart object
 	var chart;
 
-	function drawChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart, redraw = false) {
-		$.ajax('{{ url_for('api.q1_aggregate') }}' + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr
-						+ '/' + sort_order + '/' + top_n, {
-        	cache: false,
-        	success: function (data, status, xhrObj) {
-            	console.log("ajax success, data received.", data);
-
-				data_1 = data.slice(0, data.length - 1)
-
-            	chart.dataProvider = data_1;
+	function drawChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart = false, redraw = false) {
+		loadWithAjax('{{ url_for('api.q1_aggregate') }}' + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr + '/' + sort_order + '/' + top_n,
+			// Success Handler
+			function(data) {
+            	chart.dataProvider = data.main_data;
 				chart.titles = [{
 					"text": "Number of times " + $('#stock_entity_type option:selected').text()
 							+ " where " + direction + " " + percent + "% from " + from_yr + " to " + to_yr
 				}];
-				chart.valueAxes[0].guides[0].value = data[data.length - 1];
+				chart.valueAxes[0].guides[0].value = data.average;
 
 				if(redraw) {
             		chart.validateData()
@@ -148,102 +177,15 @@
 					// WRITE
 					chart.write("chartdiv");
 				}
-        	},
-        	error: function (xhrObj, status, errorThrown) {
-            	console.log(errorThrown);
-        	}
-    	});
+			});
 	}
 
-	function makeChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart) {
-		AmCharts.ready(function () {
-			// SERIAL CHART
-			chart = new AmCharts.AmSerialChart();
-			/*
-			chart.dataLoader = {
-				"url": "{{ url_for('api.q1_aggregate') }}" + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr
-						+ '/' + sort_order + '/' + top_n,
-				"format": "json"
-			};
-			*/
-			chart.categoryField = "short_name_en";
-			chart.startDuration = 1;
-			chart.plotAreaBorderColor = "#DADADA";
-			chart.plotAreaBorderAlpha = 1;
-			chart.addClassNames = true;
-			chart.titles = [{
-				"text": "Number of times " + $('#stock_entity_type option:selected').text()
-						+ " where {% if percent >= 0 %} above {% else %} below {% endif %} {{ percent }}% from 1993 to 2016"
-			}],
-			// this single line makes the chart a bar chart
-			chart.rotate = true;
-			chart.addListener("rendered", function(e) {
-      			var curtain = document.getElementById("curtain");
-      			curtain.parentElement.removeChild(curtain);
-    		});
-
-			// AXES
-			// Category
-			var categoryAxis = chart.categoryAxis;
-			categoryAxis.gridPosition = "start";
-			categoryAxis.gridAlpha = 0.1;
-			categoryAxis.axisAlpha = 0;
-			categoryAxis.title = "Companies";
-			//categoryAxis.classNameField = "catAxisLabelCSS";
-			/*categoryAxis.addListener("clickItem", function (event) {
-			 window.location = "q1_individual_entity.html";
-			 });*/
-
-			// Value
-			var valueAxis = new AmCharts.ValueAxis();
-			valueAxis.axisAlpha = 0;
-			valueAxis.gridAlpha = 0.1;
-			valueAxis.title = "Count";
-			valueAxis.labelFunction = function (value, valueText, valueAxis) {
-				return (value);
-			};
-			valueAxis.guides = [{
-				value: 50,
-				lineColor: "#CC0000",
-				lineAlpha: 1,
-				lineThickness: 1.5,
-				dashLength: 5,
-				inside: true,
-				labelRotation: 90,
-				label: "Average",
-				boldLabel: true,
-				//inside: false,
-				position: "bottom",
-				above: true,
-				"balloonText": "<span style='font-size:14px; color:#000000;'><b>Average</b></span>",
-			}];
-			//valueAxis.position = "top";
-			chart.addValueAxis(valueAxis);
-
-			// GRAPHS
-			// first graph
-			var graph1 = new AmCharts.AmGraph();
-			graph1.type = "column";
-			graph1.title = "Count";
-			graph1.valueField = "frequency";
-			graph1.balloonText = "Count:[[value]]<br/>Click to Drilldown";
-			graph1.lineAlpha = 0;
-			//graph1.fillColors = "#ADD981";
-			graph1.fillAlphas = 1;
-			graph1.classNameField = "catAxisLabelCSS";
-			graph1.addListener("clickGraphItem", function (event) {
-				window.location = "q1_individual_entity.html";
-			});
-			chart.addGraph(graph1);
-
-			// LEGEND
-			/*var legend = new AmCharts.AmLegend();
-			 chart.addLegend(legend);*/
-
-			chart.creditsPosition = "top-right";
-
-			drawChart(setid, direction, percent, from_yr, to_yr, 'desc', 10, true, false);
-		});
+	function buildChart() {
+		chart = new AmCharts.AmSerialChart();
+		buildAmBarChart(chart, "short_name_en", "frequency", function(e) {
+			p = getQuestionParameters();
+        	window.location = '{{ url_for('publicweb.q1_individual') }}' + '/' + p.setid + '/' + e.item.dataContext.seid + '/' + p.direction + '/' + p.percent + '/' + p.from_yr + '/' + p.to_yr
+        });
 	}
 </script>
 {% endblock %}
