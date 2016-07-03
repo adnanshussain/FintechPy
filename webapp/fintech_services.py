@@ -266,7 +266,7 @@ def get_number_of_times_a_single_stockentity_was_upordown_bypercent_in_year_rang
     cursor = conn.execute(sql, (from_yr, to_yr, percent, setid, seid))
 
     result = { 'main_data': [dict(year=r[0], frequency=r[1]) for r in cursor.fetchall()],
-               'company_name_ar': [x for x in get_all_companies() if x['id'] == seid ][0]['name_ar']}
+               'company_name_ar': [x for x in get_all_companies() if x['value'] == seid ][0]['name_ar']}
 
     __close_db_connection(conn)
 
