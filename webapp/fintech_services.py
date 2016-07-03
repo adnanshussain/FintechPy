@@ -98,7 +98,7 @@ def get_all_sectors():
 
 def get_all_companies():
     # TODO: This method can be refactored to have one single method get_all_stock_entites_by_type
-    return [dict(id=r[0], name_en=r["NameEn"], name_ar=r["NameAr"], short_name_en=r["ShortNameEn"]) for r in
+    return [dict(value=r[0], name_en=r["NameEn"], name_ar=r["NameAr"], text=r["ShortNameEn"]) for r in
             __fetch_all("select * from StockEntities where StockEntityTypeID = ?", (STOCK_ENTITY_TYPES["company"],))]
 
 def get_company(company_id):
@@ -267,6 +267,77 @@ def get_number_of_times_a_single_stockentity_was_upordown_bypercent_in_year_rang
 
     result = { 'main_data': [dict(year=r[0], frequency=r[1]) for r in cursor.fetchall()],
                'company_name_ar': [x for x in get_all_companies() if x['id'] == seid ][0]['name_ar']}
+
+    __close_db_connection(conn)
+
+    return result
+
+def get_the_number_of_times_stock_entities_were_up_down_unchanged_in_year_range(setid, from_yr, to_yr):
+    def calculate_percent(target_number, *args):
+        return round(target_number / sum(args) * 100, 2)
+
+    conn = __get_open_db_connection(use_row_factory=False, register_udfs=True)
+
+    __check_and_create_table_with_change_percentage(setid, from_yr, to_yr, conn)
+
+    sql = '''
+            --EXPLAIN QUERY PLAN
+            SELECT
+                se.ShortNameEn short_name_en,
+		        --dow_name(date(spv.fordate)) Day,
+		        count(case when spv.change_percentage > 0 then 1 end) positive,
+		        count(case when spv.change_percentage < 0 then -1 end) negative,
+		        count(case when spv.change_percentage = 0 then 0 end) no_change,
+		        se.StockEntityID id
+	        from {0} spv
+	        inner join StockEntities se on se.StockEntityTypeID = spv.StockEntityTypeID and se.StockEntityID = spv.StockEntityID
+	        where
+	        spv.StockEntityTypeID = ?
+	        and yr >= ? and yr <= ?
+	        group by spv.StockEntityID --, dow(date(spv.fordate))
+	        --order by StockEntityID, dow(date(spv.fordate))
+	        order by positive desc
+        '''.format(TN_SEP_WITH_CHANGE_PERCENTAGE)
+
+    cursor = conn.execute(sql, (setid, from_yr, to_yr))
+
+    result = { 'main_data': [dict(id=r[4], se_short_name_en=r[0], positive=r[1], negative=r[2], nochange=r[3],
+                                  percent_positive=calculate_percent(r[1], r[1], r[2], r[3]),
+                                  percent_negative=calculate_percent(r[2], r[1], r[2], r[3]),
+                                  percent_nochange=calculate_percent(r[3], r[1], r[2], r[3])) for r in cursor.fetchall()]}
+
+    __close_db_connection(conn)
+
+    return result
+
+def get_the_number_of_times_a_stock_entity_was_up_down_unchanged_per_day_in_year_range(setid, seid, from_yr, to_yr):
+    def calculate_percent(target_number, *args):
+        return round(target_number / sum(args) * 100, 2)
+
+    conn = __get_open_db_connection(use_row_factory=False, register_udfs=True)
+
+    __check_and_create_table_with_change_percentage(setid, from_yr, to_yr, conn)
+
+    sql = '''
+            SELECT
+		        dow_name(date(spv.fordate)) dow_name,
+		        count(case when spv.change_percentage > 0 then 1 end) positive,
+		        count(case when spv.change_percentage < 0 then -1 end) negative,
+		        count(case when spv.change_percentage = 0 then 0 end) no_change
+	        from {0} spv
+	        where
+	        spv.StockEntityTypeID = ?
+	        and spv.StockEntityID = ?
+	        and yr >= ? and yr <= ?
+	        group by dow(date(spv.fordate));
+        '''.format(TN_SEP_WITH_CHANGE_PERCENTAGE)
+
+    cursor = conn.execute(sql, (setid, seid, from_yr, to_yr))
+
+    result = { 'main_data': [dict(dow_name=r[0], positive=r[1], negative=r[2], nochange=r[3],
+                                  percent_positive=calculate_percent(r[1], r[1], r[2], r[3]),
+                                  percent_negative=calculate_percent(r[2], r[1], r[2], r[3]),
+                                  percent_nochange=calculate_percent(r[3], r[1], r[2], r[3])) for r in cursor.fetchall()]}
 
     __close_db_connection(conn)
 

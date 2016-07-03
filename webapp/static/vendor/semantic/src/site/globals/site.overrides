@@ -10,3 +10,8 @@
 {
     color: #ffffff !important;
 }
+
+.ui.table.openended {
+    border-left: none;
+    border-right: none;
+}

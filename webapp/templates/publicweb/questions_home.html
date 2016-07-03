@@ -3,8 +3,19 @@
 <a class="ui orange header" href="{{ url_for('publicweb.q1_aggregate', setid=1, direction='above', percent=5, from_yr=2006, to_yr=2016) }}">
 	Q1: How many times were Saudi companies above 5% from 2006 to 2016?
 </a>
+
 <br/><br/>
 <a class="ui orange header" href="{{ url_for('publicweb.q1_individual', setid=1, seid=77, direction='above', percent=5, from_yr=2006, to_yr=2016) }}">
-	Q1: How many times was SABIC above 5% from 2006 to 2016?
+	Q1.1: How many times was SABIC above 5% from 2006 to 2016?
+</a>
+
+<br/><br/>
+<a class="ui orange header" href="{{ url_for('publicweb.q2_aggregate', setid=1, from_yr=2010, to_yr=2016) }}">
+	Q2: What have been the best and worst days for Saudi companies from 2010 to 2016?
+</a>
+
+<br/><br/>
+<a class="ui orange header" href="{{ url_for('publicweb.q2_individual', setid=1, seid=77, from_yr=2010, to_yr=2016) }}">
+	Q2.1: What have been the best and worst weekdays for SABIC from 2010 to 2016?
 </a>
 {% endblock %}

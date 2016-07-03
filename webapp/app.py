@@ -8,6 +8,7 @@ from .api_blueprint import *
 ######################
 theapp = Flask(__name__)
 # theapp.json_encoder = config.NonASCIIJSONEncoder
+# theapp.jinja_env.line_statement_prefix = '#'
 
 theapp.config.from_object(config)
 

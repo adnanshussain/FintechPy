@@ -2,7 +2,7 @@ function loadWithAjax(url, successHandler) {
 	$.ajax(url, {
         	cache: false,
         	success: function (data, status, xhrObj) {
-            	console.log("ajax success, data received.", data);
+            	//console.log("ajax success, data received.", data);
 
             	successHandler(data, status, xhrObj);
         	},

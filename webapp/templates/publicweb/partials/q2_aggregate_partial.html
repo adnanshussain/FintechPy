@@ -1,0 +1,18 @@
+{% for d in result.main_data %}
+    <tr class="center aligned">
+        <td>{{ d['se_short_name_en'] }}</td>
+        <td>
+            <table style="width:100%; border: 1px solid rgba(34, 36, 38, 0.15)">
+                <tr>
+                    <td style="width: {{ d['percent_positive']|round(2) }}%; background-color: #2ECC40">{{ d['percent_positive'] }}%</td>
+                    <td class="green" style="width: {{ d['percent_negative']|round(2) }}%; background-color: #ed0000; color: white">{{ d['percent_negative'] }}%</td>
+                    <td class="green" style="width: {{ d['percent_nochange']|round(2) }}%; background-color: #d0d0d0;">{{ d['percent_nochange'] }}%</td>
+                </tr>
+            </table>
+        </td>
+        <td>{{ d['positive'] }}</td>
+        <td>{{ d['negative'] }}</td>
+        <td>{{ d['nochange'] }}</td>
+        <td><a href="{{ url_for('publicweb.q2_individual', setid=1, seid=d['id'], from_yr=from_yr, to_yr=to_yr) }}">Drill Down</a></td>
+    </tr>
+{% endfor %}

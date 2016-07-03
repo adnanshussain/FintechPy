@@ -1,0 +1,77 @@
+{% import 'publicweb/partials/macros.html' as macros %}
+{% extends 'publicweb/layout.html' %}
+{% block body %}
+    <div class="ui padded grid">
+        <div class="one wide column">
+            <span class="ui orange large header"><i class="idea icon"></i></span>
+        </div>
+        <div class="fifteen wide column">
+            <span class="ui orange large header">What have been the Best and Worst days for </span>
+            {{ macros.spacer() }}
+            {{ macros.select_by_dict_list("stock_entity", all_companies, selected_company.id, 'compact', True) }}
+			<span class="ui orange large header"> from </span>
+			{{ macros.select_by_range("from_yr", min_yr, max_yr, from_yr) }}
+	 		<span class="ui orange large header"> to </span>
+	 		{{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
+	 		{{ macros.spacer() }}
+			<button class="ui button" id="ask_question"> ?</button>
+        </div>
+    </div>
+
+    <div class="ui styled fluid accordion">
+	  	<div class="title">
+		    <i class="dropdown icon"></i>
+		    Filters
+	  	</div>
+		<div class="content">
+	  	</div>
+  	</div>
+
+    <table class="ui celled openended table">
+        <thead>
+        <tr class="center aligned">
+            <th class="three wide">Day of Week</th>
+            <th class="five wide">Percentage</th>
+            <th class="two wide">Up</th>
+            <th class="two wide">Down</th>
+            <th class="two wide">Unchanged</th>
+        </tr>
+        </thead>
+        <tbody id="result_box">
+        </tbody>
+    </table>
+{% endblock %}
+{% block page_js %}
+<script type="text/javascript">
+	$(function() {
+		$('.ui.dropdown').dropdown();
+		$('.menu .item').tab();
+		$('.ui.accordion').accordion();
+
+		$('#ask_question').on('click', function (e) {
+			askQuestion();
+		});
+
+		askQuestion();
+	});
+
+	function getQuestionParameters() {
+		return({
+			setid: 1, // TODO: Make this generic
+			seid: $('#stock_entity').val(),
+			from_yr: $('#from_yr').val(),
+			to_yr: $('#to_yr').val()
+		});
+	}
+
+	function askQuestion() {
+		p = getQuestionParameters();
+
+		loadWithAjax('{{ url_for('.q2_individual_partial') }}' + '/' + p.setid + '/' + p.seid + '/' + p.from_yr + '/' + p.to_yr,
+			// Success Handler
+			function(data) {
+				$('#result_box').html(data);
+			});
+	}	
+</script>
+{% endblock %}

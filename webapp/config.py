@@ -9,6 +9,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(basedir, 'data/argaam_fintech.db')
 HOST = "0.0.0.0" # None
 
+# Not in use anymore...
 class NonASCIIJSONEncoder(json.JSONEncoder):
     def __init__(self, **kwargs):
         kwargs['ensure_ascii'] = False

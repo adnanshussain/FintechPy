@@ -1,0 +1,93 @@
+{% import 'publicweb/partials/macros.html' as macros %}
+{% extends 'publicweb/layout.html' %}
+{% block body %}
+    <div class="ui padded grid">
+        <div class="one wide column">
+            <span class="ui orange large header"><i class="idea icon"></i></span>
+        </div>
+        <div class="fifteen wide column">
+            <span class="ui orange large header">What have been the Best and Worst days for </span>
+            <select class="ui compact selection dropdown" id="stock_entity_type">
+                <option value="1">Companies</option>
+                <option value="2">Markets</option>
+                <option value="5">Commodities</option>
+            </select>
+            <span class="ui orange large header">&nbsp;in&nbsp;</span>
+            <select class="ui selection dropdown" id="market">
+                <option value="1">Saudi</option>
+            </select>
+			<span class="ui orange large header"> from </span>
+			<select class="ui compact selection dropdown" id="from_yr">
+				{% for yr in range(min_yr, max_yr + 1) %}
+				<option value="{{ yr }}" {% if yr== from_yr %} selected="selected" {% endif %}>{{ yr }}</option>
+				{% endfor %}
+			</select>
+			<span class="ui orange large header"> to </span>
+			<select class="ui compact selection dropdown" id="to_yr">
+				{% for yr in range(min_yr, max_yr + 1) %}
+				<option value="{{ yr }}" {% if yr== to_yr %} selected="selected" {% endif %}>{{ yr }}</option>
+				{% endfor %}
+			</select>
+			<div style="width: .5em; display: inline-block"></div>
+			<button class="ui button" id="ask_question"> ?</button>
+        </div>
+    </div>
+
+    <div class="ui styled fluid accordion">
+	  	<div class="title">
+		    <i class="dropdown icon"></i>
+		    Filters
+	  	</div>
+		<div class="content">
+		    <label>Show Top: </label>{{ macros.select_by_range("top_n", 10, 100, 10) }}
+	  	</div>
+  	</div>
+
+    <table class="ui celled openended table">
+        <thead>
+        <tr class="center aligned">
+            <th class="three wide">Company</th>
+            <th class="five wide">Percentage</th>
+            <th class="two wide">Up</th>
+            <th class="two wide">Down</th>
+            <th class="two wide">Unchanged</th>
+            <th>Discover</th>
+        </tr>
+        </thead>
+        <tbody id="result_box">
+        </tbody>
+    </table>
+{% endblock %}
+{% block page_js %}
+<script type="text/javascript">
+	$(function() {
+		$('.ui.dropdown').dropdown();
+		$('.menu .item').tab();
+		$('.ui.accordion').accordion();
+
+		$('#ask_question').on('click', function (e) {
+			askQuestion();
+		});
+
+		askQuestion();
+	});
+
+	function getQuestionParameters() {
+		return({
+			setid: $('#stock_entity_type').val(),
+			from_yr: $('#from_yr').val(),
+			to_yr: $('#to_yr').val()
+		});
+	}
+
+	function askQuestion() {
+		p = getQuestionParameters();
+
+		loadWithAjax('{{ url_for('.q2_aggregate_partial') }}' + '/' + p.setid + '/' + p.from_yr + '/' + p.to_yr,
+			// Success Handler
+			function(data) {
+				$('#result_box').html(data);
+			});
+	}	
+</script>
+{% endblock %}
