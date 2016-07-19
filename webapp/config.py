@@ -6,8 +6,13 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 ###############################
 ### Custom Configs          ###
 ###############################
-DB_PATH = os.path.join(basedir, 'data/argaam_fintech.db')
-HOST = "0.0.0.0" # None
+__OLD_DB_NAME = 'argaam_fintech.db'
+__NEW_DB_NAME = 'fintech.db'
+OLD_DB_PATH = os.path.join(basedir, 'data', __OLD_DB_NAME)
+NEW_DB_PATH = os.path.join(basedir, 'data', __NEW_DB_NAME)
+SQL_ALCHEMY_DB_URL = "sqlite:///" + NEW_DB_PATH
+
+HOST = None # "0.0.0.0"
 
 # Not in use anymore...
 class NonASCIIJSONEncoder(json.JSONEncoder):

@@ -11,3 +11,4 @@ webapp/static/vendor/semantic/src/semantic.less
 webapp/static/vendor/semantic/src/theme.less
 webapp/static/vendor/semantic/src/themes/
 webapp/static/vendor/semantic/tasks/
+venv/

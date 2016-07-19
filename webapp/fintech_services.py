@@ -59,7 +59,7 @@ def _udf_get_year(dt):
 ###  Generic DB Functions   ###
 ###############################
 def __get_open_db_connection(use_row_factory=True, register_udfs=False):
-    conn = sqlite3.connect(config.DB_PATH)
+    conn = sqlite3.connect(config.OLD_DB_PATH)
 
     if use_row_factory:
         conn.row_factory = sqlite3.Row
