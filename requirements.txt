@@ -1,0 +1,7 @@
+Flask
+Flask-Admin
+Flask-SQLAlchemy
+Flask-Login>=0.3.0
+WTForms
+APScheduler
+pypyodbc

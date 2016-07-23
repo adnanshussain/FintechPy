@@ -1,11 +1,13 @@
 from webapp import config
+from flask_login import UserMixin
 from sqlalchemy import create_engine, Column, Integer, String, Numeric, Date, DateTime, Boolean, ForeignKey
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from datetime import datetime
 
 #  SQLAlchemy Stuff
-sql_engine = create_engine(config.SQL_ALCHEMY_DB_URL, echo=True)
+sql_engine = create_engine(config.SQL_ALCHEMY_DB_URL, echo=False)
+DbSession = sessionmaker(bind=sql_engine)
 SQLAlchemyDeclarativeBase = declarative_base()
 
 ##################################################################
@@ -25,7 +27,7 @@ class FintechModelBaseMixin:
     def created_by_id(cls):
         return Column("created_by_id", Integer, ForeignKey("users.id"), nullable=True)
 
-    created_on = Column(DateTime)
+    created_on = Column(DateTime, default=datetime.now())
 
     @declared_attr
     def modified_by_id(cls):
@@ -36,7 +38,7 @@ class FintechModelBaseMixin:
 ###############################
 ###  User Table             ###
 ###############################
-class User(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class User(UserMixin, FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -56,7 +58,10 @@ class EventCategory(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
     is_subcategory = Column(Boolean, default=False)
     parent_id = Column(Integer, ForeignKey(id), nullable=True)
     # create a 2 way self referencing relationship (need to understand this more)
-    children = relationship("EventCategory", backref=backref('parent', remote_side=[id]))
+    children = relationship("EventCategory", backref=backref('parent', remote_side=[id])) #, primaryjoin='EventCategory.is_subcategory==False')
+
+    def __str__(self):
+        return self.name_en
 
 ###############################
 ###  Events Table           ###
@@ -95,7 +100,7 @@ class Market(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
     name_ar = Column(String, unique=True)
     symbol = Column(String)
     # FK to country
-    country_id = Column(Integer, ForeignKey(Country.id))
+    country_id = Column(Integer, ForeignKey(Country.id), nullable=True)
     country = relationship(Country, backref="markets")
 
 ###############################
