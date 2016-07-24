@@ -12,7 +12,8 @@ OLD_DB_PATH = os.path.join(basedir, 'data', _OLD_DB_NAME)
 NEW_DB_PATH = os.path.join(basedir, 'data', _NEW_DB_NAME)
 SQL_ALCHEMY_DB_URL = "sqlite:///" + NEW_DB_PATH
 
-HOST = "0.0.0.0"
+# HOST = "0.0.0.0"
+HOST = None
 PORT = 5001
 
 _ARGAAM_MSSQL_SERVER_IP = '172.16.3.65'

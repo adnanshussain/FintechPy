@@ -4,7 +4,6 @@ node_modules/
 webapp/__pycache__/
 webapp/data/
 webapp/static/vendor/amcharts/
-webapp/static/vendor/semantic/dist/
 webapp/static/vendor/semantic/gulpfile.js
 webapp/static/vendor/semantic/src/definitions/
 webapp/static/vendor/semantic/src/semantic.less

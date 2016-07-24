@@ -94,8 +94,8 @@ class UserModelView(AdminModelView):
     column_filters = ['email']
     types = [
             ('1', 'Public Portal'),
-            ('2', 'Control Pannel'),
-            ('3', 'Control Pannel Admin'),
+            ('2', 'Control Panel'),
+            ('3', 'Control Panel Admin'),
             ('4', 'Developer')
         ]
 
@@ -107,14 +107,8 @@ class UserModelView(AdminModelView):
        'type': formatUserType
     }
 
-    form_overrides = dict(
-        type=SelectField
-    )
-    form_args = dict(
-        type=dict(
-            choices= types
-        )
-    )
+    form_overrides = dict(type=SelectField)
+    form_args = dict(type=dict(choices= types))
 
 class EventCategoryModelView(AdminModelView):
     can_view_details = True
