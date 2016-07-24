@@ -11,3 +11,7 @@ webapp/static/vendor/semantic/src/theme.less
 webapp/static/vendor/semantic/src/themes/
 webapp/static/vendor/semantic/tasks/
 venv/
+env/
+.vs/
+FintechPy.pyproj
+FintechPy.sln
