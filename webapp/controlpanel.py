@@ -1,10 +1,10 @@
-from flask import redirect, url_for, request, abort
+from flask import redirect, url_for, request, abort, Markup
 from flask_admin import Admin, expose, helpers, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 import flask_login
-from wtforms import form, fields, validators
+from wtforms import form, fields, validators, SelectField
 from werkzeug.security import generate_password_hash, check_password_hash
-from .sqlalchemy_models import DbSession, User, EventCategory
+from .sqlalchemy_models import DbSession, User, EventCategory, Event
 from .app import theapp
 
 # Define login form (for flask-login)
@@ -92,19 +92,86 @@ class UserModelView(AdminModelView):
     can_view_details = True
     column_searchable_list = ['email']
     column_filters = ['email']
+    types = [
+            ('1', 'Public Portal'),
+            ('2', 'Control Pannel'),
+            ('3', 'Control Pannel Admin'),
+            ('4', 'Developer')
+        ]
+
+    def formatUserType(view, context, model, name):
+        typesDict = {1: 'Public Portal', 2: 'Control Pannel', 3: 'Control Pannel Admin', 4: 'Developer'}
+        return Markup('{}'.format(typesDict[model.type]))
+
+    column_formatters = {
+       'type': formatUserType
+    }
+
+    form_overrides = dict(
+        type=SelectField
+    )
+    form_args = dict(
+        type=dict(
+            choices= types
+        )
+    )
 
 class EventCategoryModelView(AdminModelView):
     can_view_details = True
-    form_edit_rules = form_create_rules = ('name_en', 'name_ar', 'is_subcategory', 'parent')
+
+    form_columns = ('name_en', 'name_ar', 'is_subcategory', 'parent')
+
+    def create_form(self):
+        return self._use_filtered_parent(
+            super(EventCategoryModelView, self).create_form()
+        )
+
+    def edit_form(self, obj):
+        return self._use_filtered_parent(
+            super(EventCategoryModelView, self).edit_form(obj)
+        )
+
+    def _use_filtered_parent(self, form):
+        form.parent.query_factory = self._get_parent_list
+        return form
+
+    def _get_parent_list(self):
+        return DbSession().query(EventCategory).filter_by(is_subcategory=False).all()
+
+class EventModelView(AdminModelView):
+    form_columns = ('name_en', 'name_ar', 'type', 'starts_on', 'ends_on')
+    # 1 = single day event, 2 = range date event
+    types = [
+            ('1', 'Single day event'),
+            ('2', 'Range date event')
+        ]
+
+    def formatUserType(view, context, model, name):
+        typesDict = {1: 'Single day event', 2: 'Range date event'}
+        return Markup('{}'.format(typesDict[model.type]))
+
+    column_formatters = {
+       'type': formatUserType
+    }
+
+    form_overrides = dict(
+        type=SelectField
+    )
+    form_args = dict(
+        type=dict(
+            choices= types
+        )
+    )
 
 ##################################
 ### Create the Admin Interface ###
 ##################################
-admin = Admin(theapp, name='Fintech CP', index_view=FintechAdminIndexView(), base_template='admin/my_master.html', template_mode='bootstrap3')
+admin = Admin(theapp, name='Fintech CP', index_view=FintechAdminIndexView(), template_mode='bootstrap3')
 
 ###############################
 ### Add the ModelViews      ###
 ###############################
 admin.add_view(UserModelView(User, DbSession()))
 admin.add_view(EventCategoryModelView(EventCategory, DbSession()))
+admin.add_view(EventModelView(Event, DbSession()))
 
