@@ -1,3 +1,4 @@
+from enum import Enum
 from webapp import config
 from flask_login import UserMixin
 from sqlalchemy import create_engine, Column, Integer, String, Numeric, Date, DateTime, Boolean, ForeignKey
@@ -9,6 +10,21 @@ from datetime import datetime
 sql_engine = create_engine(config.SQL_ALCHEMY_DB_URL, echo=False)
 DbSession = sessionmaker(bind=sql_engine)
 SQLAlchemyDeclarativeBase = declarative_base()
+
+###############################
+### Custom Enums            ###
+###############################
+class UserTypesEnum(Enum):
+    public_portal = 1
+    control_panel = 2
+    cp_admin = 3
+    developer = 4
+
+class StockEntityTypesEnum(Enum):
+    company = 1
+    commodity = 2
+    market = 3
+    sector = 4
 
 ##################################################################
 ###  A base class for fields that are common across all tables ###
@@ -152,6 +168,7 @@ class StockPrice(SQLAlchemyDeclarativeBase):
     id = Column(Integer, primary_key=True, autoincrement=True)
     stock_entity_type_id = Column(Integer) # 1 = company, 2 = commodity, 3 = market, 4 = sector, 5 = ...
     stock_entity_id = Column(Integer)
+    stock_entity_argaam_id = Column(Integer)
     for_date = Column(Date)
     year = Column(Integer)
     month = Column(Integer)
@@ -159,11 +176,54 @@ class StockPrice(SQLAlchemyDeclarativeBase):
     close = Column(Numeric)
     min = Column(Numeric)
     max = Column(Numeric)
-    volume = Column(Numeric)
-    amount = Column(Numeric)
+    volume = Column(Numeric, nullable=True)
+    amount = Column(Numeric, nullable=True)
     change = Column(Numeric)
     change_percent = Column(Numeric)
 
+    def __str__(self):
+        return "%s %s %s" % (self.id, self.for_date, self.close)
+
 SQLAlchemyDeclarativeBase.metadata.create_all(sql_engine)
 
-a = 1
+def create_sample_sp_rows():
+    session = DbSession()
+
+    sp = StockPrice()
+    sp.stock_entity_type_id = 2
+    sp.stock_entity_id = 5
+    sp.for_date = datetime(2001, 1, 1)
+    sp.year = 2001
+    sp.month = 1
+    sp.open = 100.01
+    sp.close = 101.11
+    sp.min = sp.max = sp.volume = sp.amount = sp.change = sp.change_percent = 33.33
+
+    session.add(sp)
+
+    sp = StockPrice()
+    sp.stock_entity_type_id = 2
+    sp.stock_entity_id = 5
+    sp.for_date = datetime(2002, 2, 2)
+    sp.year = 2002
+    sp.month = 2
+    sp.open = 123.01
+    sp.close = 144.11
+    sp.min = sp.max = sp.volume = sp.amount = sp.change = sp.change_percent = 33.99
+
+    session.add(sp)
+
+    sp = StockPrice()
+    sp.stock_entity_type_id = 2
+    sp.stock_entity_id = 7
+    sp.for_date = datetime(2012, 2, 2)
+    sp.year = 2012
+    sp.month = 2
+    sp.open = 123.01
+    sp.close = 144.11
+    sp.min = sp.max = sp.volume = sp.amount = sp.change = sp.change_percent = 33.99
+
+    session.add(sp)
+
+    session.commit()
+    session.close()
