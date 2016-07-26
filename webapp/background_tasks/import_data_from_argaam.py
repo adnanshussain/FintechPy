@@ -2,7 +2,7 @@ import pypyodbc
 from webapp.config import ARGAAM_MSSQL_CONN_STR
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func, and_, select
-from webapp.sqlalchemy_models import DbSession, Market, Sector, Company, Commodity, StockPrice, StockEntityTypesEnum
+from webapp.sqlalchemy_models import DbSession, Market, Sector, Company, Commodity, StockPrice
 from datetime import datetime
 
 def _get_connection():
@@ -76,8 +76,8 @@ def fetch_and_add_companies():
         if session.query(Company).filter(Company.argaam_id == argaam_company_id).count() == 0:
             company = Company()
             company.argaam_id = r["companyid"]
-            company.full_name_en = r["companynameen"]
-            company.full_name_ar = r["companynamear"]
+            company.name_en = r["companynameen"]
+            company.name_ar = r["companynamear"]
             company.short_name_en = r["shortnameen"]
             company.short_name_ar = r["shortnamear"]
             company.market_id = session.query(Market).filter(Market.argaam_id == r["marketid"]).one().id
@@ -199,7 +199,7 @@ def fetch_and_add_company_prices():
 
     # foreach company get the stock price archive from Argaam DB
     for index, (company_id, argaam_id, last_entry, close) in enumerate(companies_with_last_entry):
-        print("Processing company #%s" % (index + 1,), session.query(Company.full_name_en).filter(Company.id == company_id).first())
+        print("Processing company #%s" % (index + 1,), session.query(Company.name_en).filter(Company.id == company_id).first())
         sql = """
                 select cspa.ForDate, cspa.[Open], cspa.[Close], cspa.[Min], cspa.[Max], cspa.[Volume], cspa.[Amount]
                 from CompanyStockPricesArchive cspa
@@ -388,11 +388,12 @@ def fetch_and_add_sector_prices():
 
 pass
 
-# fetch_and_add_sector_prices()
-# fetch_and_add_market_prices()
-# fetch_and_add_company_prices()
-# fetch_and_add_commodity_prices()
 # fetch_and_add_markets()
 # fetch_and_add_sectors()
 # fetch_and_add_companies()
 # fetch_and_add_commodities()
+#
+# fetch_and_add_sector_prices()
+# fetch_and_add_market_prices()
+# fetch_and_add_company_prices()
+# fetch_and_add_commodity_prices()
