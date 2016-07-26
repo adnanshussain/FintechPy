@@ -74,7 +74,7 @@ class EventCategory(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
     is_subcategory = Column(Boolean, default=False)
     parent_id = Column(Integer, ForeignKey(id), nullable=True)
     # create a 2 way self referencing relationship (need to understand this more)
-    children = relationship("EventCategory", backref=backref('parent', remote_side=[id])) #, primaryjoin='EventCategory.is_subcategory==False')
+    parent = relationship("EventCategory", remote_side=[id], backref = 'children') #, primaryjoin='EventCategory.is_subcategory==False')
 
     def __str__(self):
         return self.name_en
@@ -104,6 +104,8 @@ class Country(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
     name_en = Column(String, unique=True)
     name_ar = Column(String, unique=True)
 
+    def __str__(self):
+        return self.name_en
 ###############################
 ###  Markets Table          ###
 ###############################
@@ -148,6 +150,8 @@ class Company(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
     market_id = Column(Integer, ForeignKey(Market.id))
     market = relationship(Market, backref="companies")
 
+    def __str__(self):
+        return self.short_name_en
 ###############################
 ###  Commodities Table      ###
 ###############################
