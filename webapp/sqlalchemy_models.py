@@ -34,10 +34,16 @@ STOCK_ENTITY_TYPE_TABLE_NAME = {
 ### Column Default Value Funcs ###
 ##################################
 def short_name_en_default(context):
-    return context.current_parameters.get('name_en')
+    try:
+        return context.current_parameters.get('name_en')
+    except:
+        return None
 
 def short_name_ar_default(context):
-    return context.current_parameters.get('name_ar')
+    try:
+        return context.current_parameters.get('name_ar')
+    except:
+        return None
 
 ##################################################################
 ###  Base classes for fields that are common across all tables ###
