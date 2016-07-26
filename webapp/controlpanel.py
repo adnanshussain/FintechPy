@@ -6,7 +6,7 @@ from flask_admin.form import rules, widgets
 import flask_login
 from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
-from .sqlalchemy_models import DbSession, User, EventCategory, Event, Company
+from .sqlalchemy_models import DbSession, User, EventCategory, Event,Country, Company, Market, Sector, Commodity, StockPrice 
 from .app import theapp
 
 # Define login form (for flask-login)
@@ -23,8 +23,8 @@ class LoginForm(form.Form):
         # we're comparing the plaintext pw with the the hash from the db
         # if not check_password_hash(user.password, self.password.data):
         # to compare plain text passwords use
-        #user.password != self.password.data and 
-        if not check_password_hash(user.password, self.password.data):
+        # 
+        if user.password != self.password.data and not check_password_hash(user.password, self.password.data):
             raise validators.ValidationError('Invalid password')
 
     def get_user(self):
@@ -160,9 +160,11 @@ class EventCategoryModelView(AdminModelView):
 
 class EventModelView(AdminModelView):
     
-    form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company_id']
-    column_labels = dict(company_id='Company')
-
+    form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'event_category', 'company']
+    form_edit_rules = form_create_rules = ('event_category','name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company')
+    
+    column_filters = ('event_category.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
+    
     def formatUserType(view, context, model, name):
         typesDict = { 1: 'Single day event', 2: 'Range date event'}
         return Markup('{}'.format(typesDict[model.type]))
@@ -172,14 +174,9 @@ class EventModelView(AdminModelView):
     }
 
     form_overrides = dict(
-        type= fields.SelectField,
-        company_id = fields.SelectField
+        type= fields.SelectField
+        #,company_id = fields.SelectField
     )
-
-    def _get_Companies():
-       allComapnies = [(str(c.id), c.short_name_en) for c in DbSession().query(Company).all()]
-       allComapnies.insert(0, ('', 'None'))
-       return allComapnies
 
     form_args = dict(
         type=dict(
@@ -187,8 +184,7 @@ class EventModelView(AdminModelView):
                 ('1', 'Single day event'),
                 ('2', 'Range date event')
             ]
-        ),
-        company_id = dict(choices = _get_Companies())
+        )
     )
     
 
@@ -197,6 +193,8 @@ class EventModelView(AdminModelView):
         if model.company_id == '':
             model.company_id = None        
 
+class MetaDataAdminModelView(AdminModelView):
+     column_list = ['argaam_id', 'name_en', 'name_ar', 'short_name_en', 'short_name_ar']
 
 ##################################
 ### Create the Admin Interface ###
@@ -205,8 +203,14 @@ admin = Admin(theapp, name='Fintech CP', index_view = FintechAdminIndexView(), b
 
 ###############################
 ### Add the ModelViews      ###
-###############################
+###############################Country, Markets, Sectors, Companies, Commodities
 admin.add_view(UserModelView(User, DbSession()))
 admin.add_view(EventCategoryModelView(EventCategory, DbSession()))
 admin.add_view(EventModelView(Event, DbSession()))
+admin.add_view(MetaDataAdminModelView(Country, DbSession(), category ="Meta Data"))
+admin.add_view(MetaDataAdminModelView(Market, DbSession(), category ="Meta Data"))
+admin.add_view(MetaDataAdminModelView(Sector, DbSession(), category ="Meta Data"))
+admin.add_view(MetaDataAdminModelView(Company, DbSession(), category ="Meta Data"))
+admin.add_view(MetaDataAdminModelView(Commodity, DbSession(), category ="Meta Data"))
+
 

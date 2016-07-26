@@ -84,37 +84,6 @@ class User(UserMixin, FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
     type = Column(Integer, default=1) # 1 = PP, 2 = CP, 3 = CP Admin, 4 = Developer
 
 ###############################
-###  Event Categories Table ###
-###############################
-class EventCategory(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
-    __tablename__ = "event_categories"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name_en = Column(String)
-    name_ar = Column(String)
-    is_subcategory = Column(Boolean, default=False)
-    parent_id = Column(Integer, ForeignKey(id), nullable=True)
-    # create a 2 way self referencing relationship (need to understand this more)
-    parent = relationship("EventCategory", remote_side=[id], backref = 'children') #, primaryjoin='EventCategory.is_subcategory==False')
-
-    def __str__(self):
-        return self.name_en
-
-###############################
-###  Events Table           ###
-###############################
-class Event(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
-    __tablename__ = "events"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name_en = Column(String)
-    name_ar = Column(String)
-    type = Column(Integer, default=1) # 1 = single day event, 2 = range date event
-    starts_on = Column(Date)
-    ends_on = Column(Date, nullable=True)
-    company_id = Column(Integer, nullable=True)
-
-###############################
 ###  Countries Table        ###
 ###############################
 class Country(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
@@ -132,7 +101,9 @@ class Market(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclar
     # FK to country
     country_id = Column(Integer, ForeignKey(Country.id), nullable=True)
     country = relationship(Country, backref="markets")
-
+   
+    def __str__(self):
+        return self.short_name_en
 ###############################
 ###  Sectors Table          ###
 ###############################
@@ -183,6 +154,45 @@ class StockPrice(SQLAlchemyDeclarativeBase):
 
     def __str__(self):
         return "%s %s %s" % (self.id, self.for_date, self.close)
+
+
+###############################
+###  Event Categories Table ###
+###############################
+class EventCategory(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+    __tablename__ = "event_categories"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name_en = Column(String)
+    name_ar = Column(String)
+    is_subcategory = Column(Boolean, default=False)
+    parent_id = Column(Integer, ForeignKey(id), nullable=True)
+    # create a 2 way self referencing relationship (need to understand this more)
+    parent = relationship("EventCategory", remote_side=[id], backref = 'children') #, primaryjoin='EventCategory.is_subcategory==False')
+
+    def __str__(self):
+        return self.name_en
+
+###############################
+###  Events Table           ###
+###############################
+class Event(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name_en = Column(String)
+    name_ar = Column(String)
+    type = Column(Integer, default=1) # 1 = single day event, 2 = range date event
+    starts_on = Column(Date)
+    ends_on = Column(Date, nullable=True)
+    company_id = Column(Integer, nullable=True)
+    company_id = Column(Integer, ForeignKey(Company.id), nullable=True)
+    company = relationship(Company, backref="events")   
+    event_category_id = Column(Integer, ForeignKey(EventCategory.id),nullable=False)
+    event_category = relationship(EventCategory, backref="events")
+    
+    def __str__(self):
+        return self.name_en
 
 ######################################
 ### Just some sample rows and code ###
