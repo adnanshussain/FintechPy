@@ -229,6 +229,10 @@ def create_sample_sp_rows():
     session.commit()
     session.close()
 
+# session = DbSession()
+# result = session.query(STOCK_ENTITY_TYPE_TABLE_NAME[2]).select_from().filter("id = %s" % 4).first()
+# print(result)
+
 # print(STOCK_ENTITY_TYPE_TABLE_NAME[1])
 
 ###############################

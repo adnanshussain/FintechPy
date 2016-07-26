@@ -48,7 +48,7 @@
 	<div class="fifteen wide column">
 		<div class="ui grid">
 			<div class="four wide column">
-				<div class="ui big orange label" id="selected_company_name">{{ selected_company.name_ar }}</div>
+				<div class="ui big orange label" id="selected_company_name">{{ selected_company.name_en }}</div>
 			</div>
 			<div class="eleven wide right aligned column">
 				<div class="ui header" style="display: inline-block;">Compare To:</div>
@@ -114,12 +114,12 @@
 				chart.titles = [{
 					"text": "Number of times " 
 							//+ $('#stock_entity option:selected').text().trim() 
-							+ data.company_name_ar
+							+ data.name_ar
 							+ " was " + direction + " " + percent + "% from " + from_yr + " to " + to_yr
 				}];
 				chart.valueAxes[0].guides[0].value = data[data.length - 1];
 
-				$('#selected_company_name').html(data.company_name_ar);
+				$('#selected_company_name').html(data.name_en);
 
 				if(redraw) {
             		chart.validateData()
