@@ -20,14 +20,27 @@ class UserTypesEnum(Enum):
     cp_admin = 3
     developer = 4
 
-class StockEntityTypesEnum(Enum):
-    company = 1
-    commodity = 2
-    market = 3
-    sector = 4
+###############################
+### ID to Name Mappings     ###
+###############################
+STOCK_ENTITY_TYPE_TABLE_NAME = {
+    1: "companies",
+    2: "commodities",
+    3: "markets",
+    4: "sectors"
+}
+
+##################################
+### Column Default Value Funcs ###
+##################################
+def short_name_en_default(context):
+    return context.current_parameters.get('name_en')
+
+def short_name_ar_default(context):
+    return context.current_parameters.get('name_ar')
 
 ##################################################################
-###  A base class for fields that are common across all tables ###
+###  Base classes for fields that are common across all tables ###
 ##################################################################
 class FintechModelBaseMixin:
     # @declared_attr
@@ -50,6 +63,14 @@ class FintechModelBaseMixin:
         return Column("modified_by_id", Integer, ForeignKey("users.id"), nullable=True)
 
     modified_on = Column(DateTime, nullable=True)
+
+class FintechStockModelBaseMixin:
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    argaam_id = Column(Integer, nullable=True)
+    name_en = Column(String)
+    name_ar = Column(String)
+    short_name_en = Column(String, default=short_name_en_default)
+    short_name_ar = Column(String, default=short_name_ar_default)
 
 ###############################
 ###  User Table             ###
@@ -96,24 +117,15 @@ class Event(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
 ###############################
 ###  Countries Table        ###
 ###############################
-class Country(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Country(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
     __tablename__ = "countries"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    argaam_id = Column(Integer, nullable=True)
-    name_en = Column(String, unique=True)
-    name_ar = Column(String, unique=True)
 
 ###############################
 ###  Markets Table          ###
 ###############################
-class Market(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Market(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
     __tablename__ = "markets"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    argaam_id = Column(Integer, nullable=True)
-    name_en = Column(String, unique=True)
-    name_ar = Column(String, unique=True)
     symbol = Column(String)
     # FK to country
     country_id = Column(Integer, ForeignKey(Country.id), nullable=True)
@@ -122,26 +134,15 @@ class Market(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
 ###############################
 ###  Sectors Table          ###
 ###############################
-class Sector(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Sector(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
     __tablename__ = "sectors"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    argaam_id = Column(Integer, nullable=True)
-    name_en = Column(String)
-    name_ar = Column(String)
 
 ###############################
 ###  Companies Table        ###
 ###############################
-class Company(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Company(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
     __tablename__ = "companies"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    argaam_id = Column(Integer, nullable=True)
-    full_name_en = Column(String)
-    full_name_ar = Column(String)
-    short_name_en = Column(String)
-    short_name_ar = Column(String)
     stock_symbol = Column(String)
     logo_url = Column(String)
     # FK to market
@@ -151,13 +152,8 @@ class Company(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
 ###############################
 ###  Commodities Table      ###
 ###############################
-class Commodity(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Commodity(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
     __tablename__ = "commodities"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    argaam_id = Column(Integer, nullable=True)
-    name_en = Column(String)
-    name_ar = Column(String)
 
 ###############################
 ###  Stock Prices Table     ###
@@ -184,8 +180,9 @@ class StockPrice(SQLAlchemyDeclarativeBase):
     def __str__(self):
         return "%s %s %s" % (self.id, self.for_date, self.close)
 
-SQLAlchemyDeclarativeBase.metadata.create_all(sql_engine)
-
+######################################
+### Just some sample rows and code ###
+######################################
 def create_sample_sp_rows():
     session = DbSession()
 
@@ -227,3 +224,10 @@ def create_sample_sp_rows():
 
     session.commit()
     session.close()
+
+# print(STOCK_ENTITY_TYPE_TABLE_NAME[1])
+
+###############################
+###  CREATE THE TABLES      ###
+###############################
+SQLAlchemyDeclarativeBase.metadata.create_all(sql_engine)
