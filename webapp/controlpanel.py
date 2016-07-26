@@ -1,10 +1,12 @@
+from datetime import datetime
 from flask import redirect, url_for, request, abort, Markup
 from flask_admin import Admin, expose, helpers, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.form import rules, widgets
 import flask_login
-from wtforms import form, fields, validators, SelectField
+from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
-from .sqlalchemy_models import DbSession, User, EventCategory, Event
+from .sqlalchemy_models import DbSession, User, EventCategory, Event, Company
 from .app import theapp
 
 # Define login form (for flask-login)
@@ -21,7 +23,8 @@ class LoginForm(form.Form):
         # we're comparing the plaintext pw with the the hash from the db
         # if not check_password_hash(user.password, self.password.data):
         # to compare plain text passwords use
-        if user.password != self.password.data:
+        #user.password != self.password.data and 
+        if not check_password_hash(user.password, self.password.data):
             raise validators.ValidationError('Invalid password')
 
     def get_user(self):
@@ -34,7 +37,14 @@ class AdminModelView(ModelView):
         return flask_login.current_user.is_authenticated
 
     form_excluded_columns = ['created_by_id', 'created_on', 'modified_by_id', 'modified_on']
+   
+    def on_model_change(self, form, model, is_created):
+        if is_created: 
+            model.created_by_id = flask_login.current_user.id
+            model.created_on = datetime.now()
 
+        model.modified_by_id = flask_login.current_user.id
+        model.modified_on = datetime.now()
 
 # Create customized index view class that handles login & registration
 class FintechAdminIndexView(AdminIndexView):
@@ -59,8 +69,8 @@ class FintechAdminIndexView(AdminIndexView):
         # link = '<p>Don\'t have an account? <a href="' + url_for('.register_view') + '">Click here to register.</a></p>'
         self._template_args['form'] = form
         # self._template_args['link'] = link
-        return super(FintechAdminIndexView, self).index()
-        # return self.render("admin/login.html")
+        #return super(FintechAdminIndexView, self).index()
+        return self.render("admin/login.html")
 
     @expose('/register/', methods=('GET', 'POST'))
     def register_view(self):
@@ -92,6 +102,8 @@ class UserModelView(AdminModelView):
     can_view_details = True
     column_searchable_list = ['email']
     column_filters = ['email']
+    column_list = ['email', 'type', 'created_on']
+
     types = [
             ('1', 'Public Portal'),
             ('2', 'Control Panel'),
@@ -99,6 +111,10 @@ class UserModelView(AdminModelView):
             ('4', 'Developer')
         ]
 
+    form_extra_fields = {
+        'password': fields.PasswordField('Password')
+    }
+    
     def formatUserType(view, context, model, name):
         typesDict = {1: 'Public Portal', 2: 'Control Pannel', 3: 'Control Pannel Admin', 4: 'Developer'}
         return Markup('{}'.format(typesDict[model.type]))
@@ -107,14 +123,23 @@ class UserModelView(AdminModelView):
        'type': formatUserType
     }
 
-    form_overrides = dict(type=SelectField)
+    form_overrides = dict(type=fields.SelectField)
     form_args = dict(type=dict(choices= types))
 
+    def on_model_change(self, form, model, is_created):
+        super(UserModelView, self).on_model_change(form, model, is_created)
+        model.password = generate_password_hash(form.password.data)        
+        
+
 class EventCategoryModelView(AdminModelView):
+
+    session = DbSession() 
+
     can_view_details = True
-
-    form_columns = ('name_en', 'name_ar', 'is_subcategory', 'parent')
-
+    form_excluded_columns = ['children',]
+    form_columns = column_list = ['name_en', 'name_ar', 'is_subcategory', 'parent', 'created_on']
+    form_edit_rules = form_create_rules = ('parent','name_en', 'name_ar', 'is_subcategory')
+    
     def create_form(self):
         return self._use_filtered_parent(
             super(EventCategoryModelView, self).create_form()
@@ -130,18 +155,16 @@ class EventCategoryModelView(AdminModelView):
         return form
 
     def _get_parent_list(self):
-        return DbSession().query(EventCategory).filter_by(is_subcategory=False).all()
+        return self.session.query(EventCategory).filter_by(is_subcategory=False).all()
+
 
 class EventModelView(AdminModelView):
-    form_columns = ('name_en', 'name_ar', 'type', 'starts_on', 'ends_on')
-    # 1 = single day event, 2 = range date event
-    types = [
-            ('1', 'Single day event'),
-            ('2', 'Range date event')
-        ]
+    
+    form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company_id']
+    column_labels = dict(company_id='Company')
 
     def formatUserType(view, context, model, name):
-        typesDict = {1: 'Single day event', 2: 'Range date event'}
+        typesDict = { 1: 'Single day event', 2: 'Range date event'}
         return Markup('{}'.format(typesDict[model.type]))
 
     column_formatters = {
@@ -149,18 +172,36 @@ class EventModelView(AdminModelView):
     }
 
     form_overrides = dict(
-        type=SelectField
+        type= fields.SelectField,
+        company_id = fields.SelectField
     )
+
+    def _get_Companies():
+       allComapnies = [(str(c.id), c.short_name_en) for c in DbSession().query(Company).all()]
+       allComapnies.insert(0, ('', 'None'))
+       return allComapnies
+
     form_args = dict(
         type=dict(
-            choices= types
-        )
+            choices= [
+                ('1', 'Single day event'),
+                ('2', 'Range date event')
+            ]
+        ),
+        company_id = dict(choices = _get_Companies())
     )
+    
+
+    def on_model_change(self, form, model, is_created):
+        super(EventModelView, self).on_model_change(form, model, is_created)
+        if model.company_id == '':
+            model.company_id = None        
+
 
 ##################################
 ### Create the Admin Interface ###
 ##################################
-admin = Admin(theapp, name='Fintech CP', index_view=FintechAdminIndexView(), template_mode='bootstrap3')
+admin = Admin(theapp, name='Fintech CP', index_view = FintechAdminIndexView(), base_template = 'admin/admin_master.html', template_mode='bootstrap3')
 
 ###############################
 ### Add the ModelViews      ###
