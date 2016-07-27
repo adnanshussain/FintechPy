@@ -6,8 +6,8 @@ from flask_admin.form import rules, widgets
 import flask_login
 from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
-from .sqlalchemy_models import DbSession, User, EventCategory, Event,Country, Company, Market, Sector, Commodity, StockPrice 
-from .app import theapp
+from .sqlalchemy_models import User, EventCategory, Event,Country, Company, Market, Sector, Commodity, StockPrice
+from .app import theapp, db
 
 # Define login form (for flask-login)
 class LoginForm(form.Form):
@@ -28,7 +28,7 @@ class LoginForm(form.Form):
             raise validators.ValidationError('Invalid password')
 
     def get_user(self):
-        return DbSession().query(User).filter_by(email=self.email.data).first()
+        return db.session.query(User).filter_by(email=self.email.data).first()
 
 # Create customized model view class
 class AdminModelView(ModelView):
@@ -132,9 +132,6 @@ class UserModelView(AdminModelView):
         
 
 class EventCategoryModelView(AdminModelView):
-
-    session = DbSession() 
-
     can_view_details = True
     form_excluded_columns = ['children',]
     form_columns = column_list = ['name_en', 'name_ar', 'is_subcategory', 'parent', 'created_on']
@@ -204,13 +201,13 @@ admin = Admin(theapp, name='Fintech CP', index_view = FintechAdminIndexView(), b
 ###############################
 ### Add the ModelViews      ###
 ###############################Country, Markets, Sectors, Companies, Commodities
-admin.add_view(UserModelView(User, DbSession()))
-admin.add_view(EventCategoryModelView(EventCategory, DbSession()))
-admin.add_view(EventModelView(Event, DbSession()))
-admin.add_view(MetaDataAdminModelView(Country, DbSession(), category ="Meta Data"))
-admin.add_view(MetaDataAdminModelView(Market, DbSession(), category ="Meta Data"))
-admin.add_view(MetaDataAdminModelView(Sector, DbSession(), category ="Meta Data"))
-admin.add_view(MetaDataAdminModelView(Company, DbSession(), category ="Meta Data"))
-admin.add_view(MetaDataAdminModelView(Commodity, DbSession(), category ="Meta Data"))
+admin.add_view(UserModelView(User, db.session))
+admin.add_view(EventCategoryModelView(EventCategory, db.session))
+admin.add_view(EventModelView(Event, db.session))
+admin.add_view(MetaDataAdminModelView(Country, db.session, category ="Meta Data"))
+admin.add_view(MetaDataAdminModelView(Market, db.session, category ="Meta Data"))
+admin.add_view(MetaDataAdminModelView(Sector, db.session, category ="Meta Data"))
+admin.add_view(MetaDataAdminModelView(Company, db.session, category ="Meta Data"))
+admin.add_view(MetaDataAdminModelView(Commodity, db.session, category ="Meta Data"))
 
 

@@ -1,15 +1,16 @@
 from enum import Enum
-from webapp import config
+from . import config
+from .app import db
 from flask_login import UserMixin
-from sqlalchemy import create_engine, Column, Integer, String, Numeric, Date, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from datetime import datetime
 
 #  SQLAlchemy Stuff
-sql_engine = create_engine(config.SQL_ALCHEMY_DB_URL, echo=False)
-DbSession = sessionmaker(bind=sql_engine)
-SQLAlchemyDeclarativeBase = declarative_base()
+# sql_engine = create_engine(config.SQL_ALCHEMY_DB_URL, echo=False)
+# DbSession = sessionmaker(bind=sql_engine)
+# SQLAlchemyDeclarativeBase = declarative_base()
 
 ###############################
 ### Custom Enums            ###
@@ -81,7 +82,7 @@ class FintechStockModelBaseMixin:
 ###############################
 ###  User Table             ###
 ###############################
-class User(UserMixin, FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class User(UserMixin, FintechModelBaseMixin, db.Model):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -92,7 +93,7 @@ class User(UserMixin, FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
 ###############################
 ###  Countries Table        ###
 ###############################
-class Country(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Country(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
     __tablename__ = "countries"
 
     def __str__(self):
@@ -100,7 +101,7 @@ class Country(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDecla
 ###############################
 ###  Markets Table          ###
 ###############################
-class Market(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Market(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
     __tablename__ = "markets"
 
     symbol = Column(String)
@@ -113,13 +114,13 @@ class Market(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclar
 ###############################
 ###  Sectors Table          ###
 ###############################
-class Sector(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Sector(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
     __tablename__ = "sectors"
 
 ###############################
 ###  Companies Table        ###
 ###############################
-class Company(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Company(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
     __tablename__ = "companies"
 
     stock_symbol = Column(String)
@@ -133,13 +134,13 @@ class Company(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDecla
 ###############################
 ###  Commodities Table      ###
 ###############################
-class Commodity(FintechModelBaseMixin, FintechStockModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Commodity(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
     __tablename__ = "commodities"
 
 ###############################
 ###  Stock Prices Table     ###
 ###############################
-class StockPrice(SQLAlchemyDeclarativeBase):
+class StockPrice(db.Model):
     __tablename__ = "stock_prices"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -165,7 +166,7 @@ class StockPrice(SQLAlchemyDeclarativeBase):
 ###############################
 ###  Event Categories Table ###
 ###############################
-class EventCategory(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class EventCategory(FintechModelBaseMixin, db.Model):
     __tablename__ = "event_categories"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -182,7 +183,7 @@ class EventCategory(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
 ###############################
 ###  Events Table           ###
 ###############################
-class Event(FintechModelBaseMixin, SQLAlchemyDeclarativeBase):
+class Event(FintechModelBaseMixin, db.Model):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -254,17 +255,17 @@ def create_sample_sp_rows():
 ###############################
 ###  CREATE THE TABLES      ###
 ###############################
-SQLAlchemyDeclarativeBase.metadata.create_all(sql_engine)
+# SQLAlchemyDeclarativeBase.metadata.create_all(sql_engine)
+db.create_all()
 
 ########################################
 ### Create 1st User if doesn't exist ###
 ########################################
-session = DbSession()
-if session.query(User.id).filter(User.email == 'fintechadmin@danatev.com').scalar() is None:
+if db.session.query(User.id).filter(User.email == 'fintechadmin@danatev.com').scalar() is None:
     user = User()
     user.email = 'fintechadmin@danatev.com'
     user.password = 'ftAdmin123$$$'
     user.type = 3
-    session.add(user)
-    session.commit()
-    session.close()
+    db.session.add(user)
+    db.session.commit()
+    db.session.close()

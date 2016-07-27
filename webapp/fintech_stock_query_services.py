@@ -1,6 +1,6 @@
 import sqlite3, datetime
 from . import config
-from .sqlalchemy_models import STOCK_ENTITY_TYPE_TABLE_NAME, DbSession
+from .sqlalchemy_models import STOCK_ENTITY_TYPE_TABLE_NAME
 
 ###############################
 ### User Defined Functions  ###
