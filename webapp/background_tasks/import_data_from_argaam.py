@@ -391,7 +391,7 @@ def fetch_and_add_sector_prices():
     cur.close()
     conn.close()
 
-pass
+print(__name__, ' got executed')
 
 fetch_and_add_markets()
 fetch_and_add_sectors()

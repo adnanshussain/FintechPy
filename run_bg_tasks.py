@@ -1,0 +1,1 @@
+from webapp.background_tasks import import_data_from_argaam
