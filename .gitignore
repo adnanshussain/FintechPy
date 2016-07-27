@@ -15,3 +15,5 @@ env/
 .vs/
 FintechPy.pyproj
 FintechPy.sln
+*.tar
+

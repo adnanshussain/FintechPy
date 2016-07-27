@@ -28,10 +28,8 @@ ARGAAM_MSSQL_CONN_STR = 'Driver={SQL Server Native Client 11.0};Server=%s;Databa
 ### Flask Configs           ###
 ###############################
 SECRET_KEY = "secret key for session usage"
-
-#TEMPLATES_AUTO_RELOAD = True
-
 DEBUG = True
+#TEMPLATES_AUTO_RELOAD = True
 #EXPLAIN_TEMPLATE_LOADING = True
 
 # Not in use anymore...

@@ -1,21 +1,20 @@
-import pypyodbc
-from webapp.config import ARGAAM_MSSQL_CONN_STR
+import pymssql
+from webapp.config import _ARGAAM_MSSQL_SERVER_IP, _ARGAAM_MSSQL_DB_USER_NAME, _ARGAAM_MSSQL_DB_PWD, _ARGAAM_MSSQL_DB_NAME
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func, and_, select
 from webapp.sqlalchemy_models import DbSession, Market, Sector, Company, Commodity, StockPrice
 from datetime import datetime
 
-def _get_connection():
-    return pypyodbc.connect(ARGAAM_MSSQL_CONN_STR)
+def _get_connection(as_dict=False):
+    return pymssql.connect(_ARGAAM_MSSQL_SERVER_IP, _ARGAAM_MSSQL_DB_USER_NAME,\
+                           _ARGAAM_MSSQL_DB_PWD, _ARGAAM_MSSQL_DB_NAME,\
+                           as_dict=as_dict)
 
 def fetch_and_add_markets():
-    conn = _get_connection()
+    conn = _get_connection(True)
     cur = conn.cursor()
 
-    cur.execute("select * from markets where IsActive = 1 and IsTrading = 1 and DisplayInPP = 1")
-
-    # for d in cur.description:
-    #     print(d)
+    cur.execute("select marketid, marketnameen, marketnamear, generalindexsymbol from markets where IsActive = 1 and IsTrading = 1 and DisplayInPP = 1")
 
     session = DbSession()
 
@@ -36,10 +35,12 @@ def fetch_and_add_markets():
     conn.close()
 
 def fetch_and_add_sectors():
-    conn = _get_connection()
+    conn = _get_connection(True)
     cur = conn.cursor()
 
-    cur.execute("select * from MarketSectors ms inner join sectors s on ms.SectorID = s.sectorid where ms.MarketID = 3 and s.IsPublished = 1")
+    cur.execute("select s.sectorid, s.sectornameen, s.sectornamear from MarketSectors ms\
+                  inner join sectors s on ms.SectorID = s.sectorid\
+                  where ms.MarketID = 3 and s.IsPublished = 1")
 
     session = DbSession()
 
@@ -59,11 +60,11 @@ def fetch_and_add_sectors():
     conn.close()
 
 def fetch_and_add_companies():
-    conn = _get_connection()
+    conn = _get_connection(True)
     cur = conn.cursor()
 
-    cur.execute("""select msc.MarketID, msc.CompanyID, msc.CompanyNameEn, msc.CompanyNameAr, msc.ShortNameEn, msc.ShortNameAr,
-                c.StockSymbol, c.LogoURL
+    cur.execute("""select msc.marketid, msc.companyid, msc.companynameen, msc.companynamear, msc.shortnameen, msc.shortnamear,
+                c.stocksymbol, c.logourl
                 from pub.MarketSectorCompanies msc
                 inner join dbo.Companies c on c.CompanyID = msc.CompanyID
                 where msc.MarketStatusID = 3 and msc.marketid = 3 and msc.RecordStatus = 1 and msc.IsActive = 1 and msc.IsSuspended = 0""")
@@ -91,10 +92,10 @@ def fetch_and_add_companies():
     conn.close()
 
 def fetch_and_add_commodities():
-    conn = _get_connection()
+    conn = _get_connection(True)
     cur = conn.cursor()
 
-    cur.execute("select * from CommodityStockPrices where IsVisible = 1")
+    cur.execute("select commodityid, commoditynameen, commoditynamear from CommodityStockPrices where IsVisible = 1")
 
     session = DbSession()
 
@@ -135,11 +136,11 @@ def fetch_and_add_commodity_prices():
               select cspa.ForDate, cspa.[Open], cspa.[Close], cspa.[Min], cspa.[Max]
               from CommodityStockPricesArchive cspa inner join
               (select max(CommodityStockPriceArchiveID) CommodityStockPriceArchiveID from CommodityStockPricesArchive
-              where CommodityID = ? group by ForDate, CommodityID) cspa2 on cspa.CommodityStockPriceArchiveID = cspa2.CommodityStockPriceArchiveID
+              where CommodityID = %d group by ForDate, CommodityID) cspa2 on cspa.CommodityStockPriceArchiveID = cspa2.CommodityStockPriceArchiveID
               where cspa.[Close] <> 0
         """
         if last_entry is not None:
-            sql += " and fordate > ? "
+            sql += " and fordate > %s "
             params = (argaam_id, last_entry)
         else:
             params = (argaam_id, )
@@ -152,13 +153,14 @@ def fetch_and_add_commodity_prices():
         commodity_prices = cur.fetchall()
 
         for index in range(0, len(commodity_prices)):
+            for_date = datetime.strptime(commodity_prices[index][0], "%Y-%m-%d")
             sp = StockPrice()
             sp.stock_entity_type_id = 2 # commodity
             sp.stock_entity_id = commodity_id
             sp.stock_entity_argaam_id = argaam_id
-            sp.for_date = commodity_prices[index][0]
-            sp.year = commodity_prices[index][0].year
-            sp.month = commodity_prices[index][0].month
+            sp.for_date = for_date
+            sp.year = for_date.year
+            sp.month = for_date.month
             sp.open = commodity_prices[index][1]
             sp.close = commodity_prices[index][2]
             sp.min  = commodity_prices[index][3]
@@ -203,10 +205,10 @@ def fetch_and_add_company_prices():
         sql = """
                 select cspa.ForDate, cspa.[Open], cspa.[Close], cspa.[Min], cspa.[Max], cspa.[Volume], cspa.[Amount]
                 from CompanyStockPricesArchive cspa
-                where cspa.companyid = ?
+                where cspa.companyid = %d
               """
         if last_entry is not None:
-            sql += " and fordate > ? "
+            sql += " and fordate > %s "
             params = (argaam_id, last_entry)
         else:
             params = (argaam_id,)
@@ -218,13 +220,14 @@ def fetch_and_add_company_prices():
         company_prices = cur.fetchall()
 
         for index in range(0, len(company_prices)):
+            for_date = datetime.strptime(company_prices[index][0], "%Y-%m-%d")
             sp = StockPrice()
             sp.stock_entity_type_id = 1  # company
             sp.stock_entity_id = company_id
             sp.stock_entity_argaam_id = argaam_id
-            sp.for_date = company_prices[index][0]
-            sp.year = company_prices[index][0].year
-            sp.month = company_prices[index][0].month
+            sp.for_date = for_date
+            sp.year = for_date.year
+            sp.month = for_date.month
             sp.open = company_prices[index][1]
             sp.close = company_prices[index][2]
             sp.min = company_prices[index][3]
@@ -271,11 +274,11 @@ def fetch_and_add_market_prices():
         sql = """
                 select spa.ForDate, spa.[Open], spa.[Close], spa.[Min], spa.[Max], spa.[Volume], spa.[Amount]
                 from MarketStockPricesArchive spa
-                where spa.MarketID = ?
+                where spa.MarketID = %d
                 and spa.[close] <> 0
               """
         if last_entry is not None:
-            sql += " and fordate > ? "
+            sql += " and fordate > %s "
             params = (argaam_id, last_entry)
         else:
             params = (argaam_id,)
@@ -287,13 +290,14 @@ def fetch_and_add_market_prices():
         market_prices = cur.fetchall()
 
         for index in range(0, len(market_prices)):
+            for_date = datetime.strptime(market_prices[index][0], "%Y-%m-%d")
             sp = StockPrice()
             sp.stock_entity_type_id = 3  # market
             sp.stock_entity_id = market_id
             sp.stock_entity_argaam_id = argaam_id
-            sp.for_date = market_prices[index][0]
-            sp.year = market_prices[index][0].year
-            sp.month = market_prices[index][0].month
+            sp.for_date = for_date
+            sp.year = for_date.year
+            sp.month = for_date.month
             sp.open = market_prices[index][1]
             sp.close = market_prices[index][2]
             sp.min = market_prices[index][3]
@@ -338,12 +342,12 @@ def fetch_and_add_sector_prices():
         sql = """
                 select spa.ForDate, spa.[Open], spa.[Close], spa.[Min], spa.[Max], spa.[Volume], spa.[Amount]
                 from SectorStockPricesArchive spa inner join
-                (select max(SectorStockPriceArchiveID) SectorStockPriceArchiveID from SectorStockPricesArchive where SectorID = ? group by ForDate, SectorID) spa2
+                (select max(SectorStockPriceArchiveID) SectorStockPriceArchiveID from SectorStockPricesArchive where SectorID = %d group by ForDate, SectorID) spa2
                 on spa.SectorStockPriceArchiveID = spa2.SectorStockPriceArchiveID
                 where spa.[Close] <> 0
               """
         if last_entry is not None:
-            sql += " and fordate > ? "
+            sql += " and fordate > %s "
             params = (argaam_id, last_entry)
         else:
             params = (argaam_id, )
@@ -356,13 +360,14 @@ def fetch_and_add_sector_prices():
         sector_prices = cur.fetchall()
 
         for index in range(0, len(sector_prices)):
+            for_date = datetime.strptime(sector_prices[index][0], "%Y-%m-%d")
             sp = StockPrice()
             sp.stock_entity_type_id = 4 # sector
             sp.stock_entity_id = sector_id
             sp.stock_entity_argaam_id = argaam_id
-            sp.for_date = sector_prices[index][0]
-            sp.year = sector_prices[index][0].year
-            sp.month = sector_prices[index][0].month
+            sp.for_date = for_date
+            sp.year = for_date.year
+            sp.month = for_date.month
             sp.open = sector_prices[index][1]
             sp.close = sector_prices[index][2]
             sp.min  = sector_prices[index][3]
@@ -388,12 +393,12 @@ def fetch_and_add_sector_prices():
 
 pass
 
-# fetch_and_add_markets()
-# fetch_and_add_sectors()
-# fetch_and_add_companies()
-# fetch_and_add_commodities()
-#
-# fetch_and_add_sector_prices()
-# fetch_and_add_market_prices()
-# fetch_and_add_company_prices()
-# fetch_and_add_commodity_prices()
+fetch_and_add_markets()
+fetch_and_add_sectors()
+fetch_and_add_companies()
+fetch_and_add_commodities()
+
+fetch_and_add_sector_prices()
+fetch_and_add_market_prices()
+fetch_and_add_company_prices()
+fetch_and_add_commodity_prices()

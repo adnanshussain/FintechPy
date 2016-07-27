@@ -255,3 +255,16 @@ def create_sample_sp_rows():
 ###  CREATE THE TABLES      ###
 ###############################
 SQLAlchemyDeclarativeBase.metadata.create_all(sql_engine)
+
+########################################
+### Create 1st User if doesn't exist ###
+########################################
+session = DbSession()
+if session.query(User.id).filter(User.email == 'fintechadmin@danatev.com').scalar() is None:
+    user = User()
+    user.email = 'fintechadmin@danatev.com'
+    user.password = 'ftAdmin123$$$'
+    user.type = 3
+    session.add(user)
+    session.commit()
+    session.close()

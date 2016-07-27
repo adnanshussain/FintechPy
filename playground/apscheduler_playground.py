@@ -3,7 +3,7 @@ from apscheduler.schedulers.background import BackgroundScheduler, BlockingSched
 scheduler = BackgroundScheduler()
 
 def simplest_func():
-    scheduler.print_jobs()
+    print("This will keep working...")
 
 scheduler.add_job(simplest_func, 'interval', seconds=2)
 
