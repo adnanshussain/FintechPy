@@ -16,4 +16,3 @@ except KeyboardInterrupt:
 scheduler.print_jobs()
 
 input("Press Enter to continue...")
-

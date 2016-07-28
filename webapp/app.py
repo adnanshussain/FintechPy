@@ -1,8 +1,7 @@
 from flask import Flask
 import flask_login
 from flask_sqlalchemy import SQLAlchemy
-# from .sqlalchemy_models import DbSession, User
-from . import config
+from webapp import config
 
 ######################
 ### Create the App ###
@@ -12,9 +11,9 @@ theapp.config.from_object(config)
 
 db = SQLAlchemy(theapp)
 
-from .pp_blueprint import *
+from webapp import pp_blueprint
 from .api_blueprint import *
-from . import sqlalchemy_models
+from .sqlalchemy_models import User
 
 ###############################
 ### Initialize flask-login  ###
@@ -25,7 +24,7 @@ login_manager.init_app(theapp)
 # Create user loader function
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.query(sqlalchemy_models.User).get(user_id)
+    return db.session.query(User).get(user_id)
 
 ###############################
 ### Initialize CP           ###
@@ -35,8 +34,40 @@ import webapp.controlpanel
 ###############################
 ### Register Blueprints     ###
 ###############################
-theapp.register_blueprint(publicweb_bp)
+theapp.register_blueprint(pp_blueprint.publicweb_bp)
 theapp.register_blueprint(api_bp)
+
+###############################
+### Configure Loggings      ###
+###############################
+if not theapp.debug:
+    pass
+    # import logging
+    # from logging.handlers import SMTPHandler
+    #
+    # credentials = None
+    #
+    # if MAIL_USERNAME or MAIL_PASSWORD:
+    #     credentials = (MAIL_USERNAME, MAIL_PASSWORD)
+    #
+    # mail_handler = SMTPHandler((MAIL_SERVER, MAIL_PORT), 'no-reply@' + MAIL_SERVER, ADMINS, 'microblog failure', credentials)
+    # mail_handler.setLevel(logging.ERROR)
+    # flaskApp.logger.addHandler(mail_handler)
+
+# if not flaskApp.debug:
+#     import logging
+#     from logging.handlers import RotatingFileHandler
+#
+#     file_handler = RotatingFileHandler('tmp/microblog.log', 'a', 1 * 1024 * 1024, 10)
+#     file_handler.setFormatter(
+#         logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+#     file_handler.setLevel(logging.INFO)
+#     flaskApp.logger.addHandler(file_handler)
+#
+#     flaskApp.logger.setLevel(logging.INFO)
+#     flaskApp.logger.info('microblog startup')
 
 # theapp.json_encoder = config.NonASCIIJSONEncoder
 # theapp.jinja_env.line_statement_prefix = '#'
+
+

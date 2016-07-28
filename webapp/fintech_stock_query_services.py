@@ -1,10 +1,13 @@
 import sqlite3, datetime
-from . import config
-from .sqlalchemy_models import STOCK_ENTITY_TYPE_TABLE_NAME
+from webapp import config
+from webapp.mappings_and_enums import STOCK_ENTITY_TYPE_TABLE_NAME
 
 ###############################
 ### User Defined Functions  ###
 ###############################
+def _udf_change_percentage(y1, y2):
+    return ((y2 - y1) / y1) * 100
+
 def _udf_day_of_week_name(dt):
     year, month, day = (int(x) for x in dt.split('-'))
     return datetime.date(year, month, day).strftime("%A")
@@ -31,6 +34,7 @@ def _close_db_connection(conn):
     conn.close()
 
 def _register_udfs(conn):
+    conn.create_function("cp", 2, _udf_change_percentage)
     conn.create_function("dow_name", 1, _udf_day_of_week_name)
     conn.create_function("dow", 1, _udf_day_of_week)
     return conn
@@ -64,6 +68,7 @@ def get_company(company_id):
 ####################################
 ### Actual Fintech Core Services ###
 ####################################
+# Q1 Aggregate
 def get_the_number_of_times_stockentities_were_upordown_bypercent_in_year_range(set_id, direction, percent, from_yr,
                                                                                  to_yr,
                                                                                  order_by_direction="desc",
@@ -105,6 +110,7 @@ def get_the_number_of_times_stockentities_were_upordown_bypercent_in_year_range(
 
     return result
 
+# Q1 Individual
 def get_the_number_of_times_a_single_stockentity_was_upordown_bypercent_in_year_range(set_id, se_id, direction, percent,
                                                                                       from_yr, to_yr):
     conn = _get_open_db_connection(use_row_factory=False, register_udfs=False)
@@ -136,6 +142,7 @@ def get_the_number_of_times_a_single_stockentity_was_upordown_bypercent_in_year_
 
     return result
 
+# Q2 Aggregate
 def get_the_number_of_times_stock_entities_were_up_down_unchanged_in_year_range(set_id, from_yr, to_yr):
     def calculate_percent(target_number, *args):
         return round(target_number / sum(args) * 100, 2)
@@ -170,6 +177,7 @@ def get_the_number_of_times_stock_entities_were_up_down_unchanged_in_year_range(
 
     return result
 
+# Q2 Individual
 def get_the_number_of_times_a_stock_entity_was_up_down_unchanged_per_day_in_year_range(set_id, se_id, from_yr, to_yr):
     def calculate_percent(target_number, *args):
         return round(target_number / sum(args) * 100, 2)
@@ -201,8 +209,50 @@ def get_the_number_of_times_a_stock_entity_was_up_down_unchanged_per_day_in_year
 
     return result
 
+# Q4 Aggregate
+def what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_day_event(set_id, se_id, date_of_event,
+                                                                                          days_before, days_after):
+    conn = _get_open_db_connection(use_row_factory=False, register_udfs=True)
 
+    sql = """
+            select sp1.stock_entity_id, e.name_en, e.name_ar, e.short_name_en, e.short_name_ar,
+			      sp2.for_date, sp2.close, cp(sp2.close, sp1.close),
+			      sp1.for_date, sp1.close, cp(sp1.close, sp3.close),
+			      sp3.for_date, sp3.close
+            from stock_prices as sp1
+            inner join stock_prices as sp2 on
+                sp1.stock_entity_type_id = ?
+                {seid}
+                and sp1.for_date = ?
+                and sp1.stock_entity_type_id = sp2.stock_entity_type_id
+                and sp1.stock_entity_id = sp2.stock_entity_id
+                and sp2.for_date = (select for_date from stock_prices where stock_entity_type_id = sp1.stock_entity_type_id
+                                                and stock_entity_id = sp1.stock_entity_id and for_date < sp1.for_date
+                                                order by for_date desc limit 1 offset ?)
+            inner join stock_prices sp3 on
+                sp1.stock_entity_type_id = sp3.stock_entity_type_id
+                and sp1.stock_entity_id = sp3.stock_entity_id
+                and sp3.for_date = (select for_date from stock_prices where stock_entity_type_id = sp1.stock_entity_type_id
+                                                and stock_entity_id = sp1.stock_entity_id and for_date > sp1.for_date
+                                                order by for_date asc limit 1 offset ?)
+            inner join {entity} e on
+	            sp1.stock_entity_id = e.id;
+           """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id], seid='' if se_id is None else 'and sp1.stock_entity_id = ?')
 
+    cursor = conn.execute(sql, (set_id, date_of_event, days_before-1, days_after-1) if se_id  is None\
+                          else (set_id, se_id, date_of_event, days_before-1, days_after-1))
 
+    stock_prices = cursor.fetchall()
 
+    return stock_prices
 
+###############################
+### Testing Code...         ###
+###############################
+# for_date = datetime.datetime.strptime('2015-01-21', '%Y-%m-%d')
+
+def test():
+    result = what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_day_event(1, None, '2015-01-22', 3, 3)
+
+    for r in result:
+        print(r)

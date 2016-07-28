@@ -1,6 +1,4 @@
-from enum import Enum
-from . import config
-from .app import db
+from webapp.app import db
 from flask_login import UserMixin
 from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship, backref, sessionmaker
@@ -11,25 +9,6 @@ from datetime import datetime
 # sql_engine = create_engine(config.SQL_ALCHEMY_DB_URL, echo=False)
 # DbSession = sessionmaker(bind=sql_engine)
 # SQLAlchemyDeclarativeBase = declarative_base()
-
-###############################
-### Custom Enums            ###
-###############################
-class UserTypesEnum(Enum):
-    public_portal = 1
-    control_panel = 2
-    cp_admin = 3
-    developer = 4
-
-###############################
-### ID to Name Mappings     ###
-###############################
-STOCK_ENTITY_TYPE_TABLE_NAME = {
-    1: "companies",
-    2: "commodities",
-    3: "markets",
-    4: "sectors"
-}
 
 ##################################
 ### Column Default Value Funcs ###
