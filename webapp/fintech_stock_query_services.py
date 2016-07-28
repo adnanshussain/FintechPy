@@ -239,12 +239,14 @@ def what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_
 	            sp1.stock_entity_id = e.id;
            """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id], seid='' if se_id is None else 'and sp1.stock_entity_id = ?')
 
-    cursor = conn.execute(sql, (set_id, date_of_event, days_before-1, days_after-1) if se_id  is None\
+    cursor = conn.execute(sql, (set_id, date_of_event, days_before-1, days_after-1) if se_id  is None
                           else (set_id, se_id, date_of_event, days_before-1, days_after-1))
 
-    stock_prices = cursor.fetchall()
+    result = cursor.fetchall()
 
-    return stock_prices
+    _close_db_connection(conn)
+
+    return result
 
 ###############################
 ### Testing Code...         ###
