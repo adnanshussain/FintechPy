@@ -1,5 +1,5 @@
-from flask import Flask
 import flask_login
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from webapp import config
 
@@ -13,7 +13,7 @@ db = SQLAlchemy(theapp)
 
 from webapp import pp_blueprint
 from .api_blueprint import *
-from .sqlalchemy_models import User
+from webapp.data_access.sqlalchemy_models import User
 
 ###############################
 ### Initialize flask-login  ###
@@ -29,7 +29,6 @@ def load_user(user_id):
 ###############################
 ### Initialize CP           ###
 ###############################
-import webapp.controlpanel
 
 ###############################
 ### Register Blueprints     ###

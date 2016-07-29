@@ -1,53 +1,5 @@
-import sqlite3, datetime
-from webapp import config
-from webapp.mappings_and_enums import STOCK_ENTITY_TYPE_TABLE_NAME
-
-###############################
-### User Defined Functions  ###
-###############################
-def _udf_change_percentage(y1, y2):
-    return ((y2 - y1) / y1) * 100
-
-def _udf_day_of_week_name(dt):
-    year, month, day = (int(x) for x in dt.split('-'))
-    return datetime.date(year, month, day).strftime("%A")
-
-def _udf_day_of_week(dt):
-    year, month, day = (int(x) for x in dt.split('-'))
-    return int(datetime.date(year, month, day).strftime("%w"))
-
-###############################
-###  Generic DB Functions   ###
-###############################
-def _get_open_db_connection(use_row_factory=True, register_udfs=False):
-    conn = sqlite3.connect(config.NEW_DB_PATH)
-
-    if use_row_factory:
-        conn.row_factory = sqlite3.Row
-
-    if register_udfs:
-        _register_udfs(conn)
-
-    return conn
-
-def _close_db_connection(conn):
-    conn.close()
-
-def _register_udfs(conn):
-    conn.create_function("cp", 2, _udf_change_percentage)
-    conn.create_function("dow_name", 1, _udf_day_of_week_name)
-    conn.create_function("dow", 1, _udf_day_of_week)
-    return conn
-
-###############################
-### General Query Functions ###
-###############################
-def _fetch_all(sql, *args):
-    conn = _get_open_db_connection()
-    c = conn.execute(sql, *args) # TODO: Need to understand how this *args really works
-    result = c.fetchall()
-    _close_db_connection(conn)
-    return result
+from webapp.data_access import _get_open_db_connection, _close_db_connection, _fetch_all
+from webapp.data_access.mappings_and_enums import STOCK_ENTITY_TYPE_TABLE_NAME
 
 ################################
 ### Should be shifted to ORM ###
@@ -242,7 +194,7 @@ def what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_
     cursor = conn.execute(sql, (set_id, date_of_event, days_before-1, days_after-1) if se_id  is None
                           else (set_id, se_id, date_of_event, days_before-1, days_after-1))
 
-    result = cursor.fetchall()
+    result = { 'main_data': [dict(name_en=r[1], cp_before=r[7], cp_after=r[10]) for r in cursor.fetchall()] }
 
     _close_db_connection(conn)
 
@@ -256,5 +208,7 @@ def what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_
 def test():
     result = what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_day_event(1, None, '2015-01-22', 3, 3)
 
-    for r in result:
+    for r in result['main_data']:
         print(r)
+
+# test()

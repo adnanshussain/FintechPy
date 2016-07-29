@@ -1,6 +1,6 @@
 import flask
-from . import fintech_stock_query_services as fsqs
-import json
+from webapp.data_access import fintech_stock_query_services as fsqs
+from webapp.data_access import dal
 
 publicweb_bp = flask.Blueprint('publicweb', __name__)
 
@@ -65,6 +65,19 @@ def q2_individual(setid, seid, from_yr, to_yr):
 def q2_individual_partial(setid, seid, from_yr, to_yr):
     return flask.render_template('publicweb/partials/q2_individual_partial.html',
                                  result=fsqs.get_the_number_of_times_a_stock_entity_was_up_down_unchanged_per_day_in_year_range(setid, seid, from_yr, to_yr))
+
+@_pwbp.route('/q4/aggregate/<int:setid>/<int:days_before>/<int:days_after>/<string:event_date>')
+def q4_aggregate(setid, days_before, days_after, event_date):
+    return flask.render_template('publicweb/q4_aggregate.html',
+                                 days_before=days_before, days_after=days_after, events=dal.get_all_events())
+
+@_pwbp.route('/q4/aggregate/partial')
+@_pwbp.route('/q4/aggregate/partial/<int:setid>/<int:days_before>/<int:days_after>/<string:event_date>')
+def q4_aggregate_partial(setid, days_before, days_after, event_date):
+    return flask.render_template('publicweb/partials/q4_aggregate_partial.html',
+                                 result=fsqs.what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_day_event(
+                                     set_id=setid, se_id=None, date_of_event=event_date, days_before=days_before,
+                                     days_after=days_after))
 
 @_pwbp.route('/testquery')
 def test_query():

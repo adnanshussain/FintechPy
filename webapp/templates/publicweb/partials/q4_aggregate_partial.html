@@ -1,0 +1,8 @@
+{% for d in result.main_data %}
+    <tr class="center aligned">
+        <td>{{ d['name_en'] }}</td>
+        <td>{{ '{:.3f}'.format(d['cp_before']) }}</td>
+        <td>{{ '{:.3f}'.format(d['cp_after']) }}</td>
+        <td>{# <a href="{{ url_for('publicweb.q2_individual', setid=1, seid=d['id'], from_yr=from_yr, to_yr=to_yr) }}">Drill Down</a> #}</td>
+    </tr>
+{% endfor %}

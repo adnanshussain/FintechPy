@@ -184,8 +184,6 @@ class Event(FintechModelBaseMixin, db.Model):
 ### Just some sample rows and code ###
 ######################################
 def create_sample_sp_rows():
-    session = DbSession()
-
     sp = StockPrice()
     sp.stock_entity_type_id = 2
     sp.stock_entity_id = 5
@@ -196,7 +194,7 @@ def create_sample_sp_rows():
     sp.close = 101.11
     sp.min = sp.max = sp.volume = sp.amount = sp.change = sp.change_percent = 33.33
 
-    session.add(sp)
+    db.session.add(sp)
 
     sp = StockPrice()
     sp.stock_entity_type_id = 2
@@ -208,7 +206,7 @@ def create_sample_sp_rows():
     sp.close = 144.11
     sp.min = sp.max = sp.volume = sp.amount = sp.change = sp.change_percent = 33.99
 
-    session.add(sp)
+    db.session.add(sp)
 
     sp = StockPrice()
     sp.stock_entity_type_id = 2
@@ -220,10 +218,10 @@ def create_sample_sp_rows():
     sp.close = 144.11
     sp.min = sp.max = sp.volume = sp.amount = sp.change = sp.change_percent = 33.99
 
-    session.add(sp)
+    db.session.add(sp)
 
-    session.commit()
-    session.close()
+    db.session.commit()
+    db.session.close()
 
 # session = DbSession()
 # result = session.query(STOCK_ENTITY_TYPE_TABLE_NAME[2]).select_from().filter("id = %s" % 4).first()

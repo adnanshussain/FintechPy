@@ -1,13 +1,14 @@
 from datetime import datetime
-from flask import redirect, url_for, request, abort, Markup
+
+import flask_login
+from flask import redirect, url_for, request, Markup
 from flask_admin import Admin, expose, helpers, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.form import rules, widgets
-import flask_login
-from wtforms import form, fields, validators
+from webapp.data_access.sqlalchemy_models import User, EventCategory, Event,Country, Company, Market, Sector, Commodity
 from werkzeug.security import generate_password_hash, check_password_hash
-from .sqlalchemy_models import User, EventCategory, Event,Country, Company, Market, Sector, Commodity, StockPrice
+from wtforms import form, fields, validators
 from .app import theapp, db
+
 
 # Define login form (for flask-login)
 class LoginForm(form.Form):

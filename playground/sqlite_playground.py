@@ -1,5 +1,6 @@
 import sqlite3
-from webapp.fintech_services import TN_FINTECH_CONFIG, TN_SEP_WITH_CHANGE_PERCENTAGE, _udf_change_percentage, \
+
+from webapp.data_access.fintech_services_TBD import TN_FINTECH_CONFIG, TN_SEP_WITH_CHANGE_PERCENTAGE, _udf_change_percentage, \
     _udf_day_of_week, _udf_day_of_week_name, _udf_get_year
 
 conn = sqlite3.connect("webapp/data/argaam_fintech.db")

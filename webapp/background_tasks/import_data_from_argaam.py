@@ -1,11 +1,11 @@
 import pymssql
+from datetime import datetime
+
+from sqlalchemy.sql import func, select
+from webapp.app import db
 from webapp.config import _ARGAAM_MSSQL_SERVER_IP, _ARGAAM_MSSQL_DB_USER_NAME, _ARGAAM_MSSQL_DB_PWD, \
     _ARGAAM_MSSQL_DB_NAME
-from webapp.app import db
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import func, and_, select
-from webapp.sqlalchemy_models import Market, Sector, Company, Commodity, StockPrice
-from datetime import datetime
+from webapp.data_access.sqlalchemy_models import Market, Sector, Company, Commodity, StockPrice
 
 
 def _get_connection(as_dict=False):

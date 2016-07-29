@@ -1,5 +1,5 @@
 import sqlite3, datetime
-from . import config
+from webapp import config
 
 import cProfile
 
