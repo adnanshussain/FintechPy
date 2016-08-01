@@ -28,7 +28,7 @@
 				<input type="text" style="width: 5em" value="{{ days_after }}" id="days_after">
 			</div>
 			<span class="ui orange large header"> days after </span>
-			{{ macros.select_by_dict_list("event_date", events, None, searchable=True) }}
+			{{ macros.select_by_dict_list("event_date", events, event_date, searchable=True) }}
 			<div style="width: .5em; display: inline-block"></div>
 			<button class="ui button" id="ask_question"> ?</button>
         </div>

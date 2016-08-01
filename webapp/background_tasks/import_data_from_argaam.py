@@ -82,7 +82,7 @@ def fetch_and_add_companies():
             company.name_ar = r["companynamear"]
             company.short_name_en = r["shortnameen"]
             company.short_name_ar = r["shortnamear"]
-            company.market_id = session.query(Market).filter(Market.argaam_id == r["marketid"]).one().id
+            company.market_id = db.session.query(Market).filter(Market.argaam_id == r["marketid"]).one().id
             company.stock_symbol = r["stocksymbol"]
             company.logo_url = r["logourl"]
             db.session.add(company)
