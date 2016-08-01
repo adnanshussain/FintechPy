@@ -6,8 +6,16 @@ from webapp.data_access import _get_open_db_connection, _close_db_connection
 
 def do_work():
     conn = _get_open_db_connection()
-    cursor = conn.cursor()
 
+    cursor = conn.cursor()
+    cursor.executemany("INSERT INTO event_groups (is_enabled, created_on, name_en, created_by_id) VALUES (?,?,?,?);",
+                       [
+                           (True, datetime.datetime.now(), 'Company Earning Announcements', 1),
+                           (True, datetime.datetime.now(), 'OPEC Meetings', 1)
+                       ]);
+    cursor.close()
+
+    cursor = conn.cursor()
     event_grp_id = cursor.execute("select id from event_groups where name_en = ?", ('Company Earning Announcements',)).fetchone()[0]
     print(event_grp_id)
     company_id = cursor.execute("select id, name_en from companies where argaam_id = ?", (77,)).fetchone()[0]
@@ -63,6 +71,25 @@ def do_work():
                         (True, datetime.datetime.now(), 'Sabic Q3-2015', 1, datetime.date(2015,10,17), company_id, event_grp_id),
                         (True, datetime.datetime.now(), 'Sabic Q4-2015', 1, datetime.date(2016,1,16), company_id, event_grp_id),
                         ])
+    cursor.close()
+
+    cursor = conn.cursor()
+    event_grp_id = cursor.execute("select id from event_groups where name_en = ?", ('OPEC Meetings',)).fetchone()[0]
+    cursor.close()
+
+    cursor = conn.cursor()
+    cursor.executemany("INSERT INTO events(is_enabled, created_on, name_en, type, starts_on, company_id, event_group_id)\
+                   VALUES (?,?,?,?,?,?,?);",
+                       [
+                        (True, datetime.datetime.now(), 'OPEC Meeting - June 2013', 1, datetime.date(2013,6, 14), None, event_grp_id),
+                        (True, datetime.datetime.now(), 'OPEC Meeting - Nov 2013', 1, datetime.date(2013, 11, 5), None, event_grp_id),
+                        (True, datetime.datetime.now(), 'OPEC Meeting - June 2014', 1, datetime.date(2014, 6, 11), None, event_grp_id),
+                        (True, datetime.datetime.now(), 'OPEC Meeting - Nov 2014', 1, datetime.date(2014, 11, 27), None, event_grp_id),
+                        (True, datetime.datetime.now(), 'OPEC Meeting - June 2015', 1, datetime.date(2015, 6, 5), None, event_grp_id),
+                        (True, datetime.datetime.now(), 'OPEC Meeting - Dec 2015', 1, datetime.date(2015, 12, 4), None, event_grp_id)
+                        ])
+    cursor.close()
+
     conn.commit()
     _close_db_connection(conn)
 
@@ -75,5 +102,5 @@ def do_work2():
 
     _close_db_connection(conn)
 
-# do_work()
+do_work()
 # do_work2()
