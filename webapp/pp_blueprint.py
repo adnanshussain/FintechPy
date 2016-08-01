@@ -79,6 +79,19 @@ def q4_aggregate_partial(setid, days_before, days_after, event_date):
                                      set_id=setid, se_id=None, date_of_event=event_date, days_before=days_before,
                                      days_after=days_after))
 
+@_pwbp.route('/q4/aggregate_probabilities/<int:setid>/<int:days_before>/<int:days_after>/<int:event_group_id>')
+def q4_aggregate_probabilities(setid, days_before, days_after, event_group_id):
+    return flask.render_template('publicweb/q4_aggregate_probabilities.html',
+                                 days_before=days_before, days_after=days_after, event_groups=dal.get_all_event_groups(),
+                                 selected_event_group=event_group_id)
+
+@_pwbp.route('/q4/aggregate_probabilities/partial')
+@_pwbp.route('/q4/aggregate_probabilities/partial/<int:setid>/<int:days_before>/<int:days_after>/<int:event_group_id>')
+def q4_aggregate_probabilities_partial(setid, days_before, days_after, event_group_id):
+    return flask.render_template('publicweb/partials/q4_aggregate_probabilities_partial.html',
+                                 result=fsqs.what_is_the_effect_of_event_group_on_stock_entities(set_id=setid, se_id=None,
+                                    eg_id=event_group_id, days_before=days_before, days_after=days_after))
+
 @_pwbp.route('/testquery')
 def test_query():
     return flask.render_template('publicweb/partials/macros.html')

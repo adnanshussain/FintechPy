@@ -23,4 +23,9 @@
 <a class="ui orange header" href="{{ url_for('publicweb.q4_aggregate', setid=1, days_before=3, days_after=3, event_date='2015-01-01') }}">
 	Q4.1: What was the performance of Saudi companies n days before and after some event?
 </a>
+
+<br/><br/>
+<a class="ui orange header" href="{{ url_for('publicweb.q4_aggregate_probabilities', setid=1, days_before=3, days_after=3, event_group_id=2) }}">
+	Q4.2: What was the effect of OPEC Meetings on Saudi companies?
+</a>
 {% endblock %}

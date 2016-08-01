@@ -1,0 +1,8 @@
+{% for d in result.main_data %}
+    <tr class="center aligned">
+        <td>{{ d['name_en'] }}</td>
+        <td>{{ '{:.2f}'.format(d['up_prob_before']) }}% Up, {{ '{:.2f}'.format(d['down_prob_before']) }}% Down</td>
+        <td>{{ '{:.2f}'.format(d['up_prob_after']) }}% Up, {{ '{:.2f}'.format(d['down_prob_after']) }}% Down</td>
+        <td>{# <a href="{{ url_for('publicweb.q2_individual', setid=1, seid=d['id'], from_yr=from_yr, to_yr=to_yr) }}">Drill Down</a> #}</td>
+    </tr>
+{% endfor %}

@@ -1,0 +1,105 @@
+{% import 'publicweb/partials/macros.html' as macros %}
+{% extends 'publicweb/layout.html' %}
+{% block body %}
+    <div class="ui padded grid">
+        <div class="one wide column">
+            <span class="ui orange large header"><i class="idea icon"></i></span>
+        </div>
+        <div class="fifteen wide column">
+            <span class="ui orange large header">What is the probabilty of </span>
+			{{ macros.spacer() }}
+            {{ macros.select_by_dict_list("stock_entity_type", macros.setypes, 1) }}
+			{{ macros.spacer() }}
+			<span id="contextual_text_1">
+				<span class="ui orange large header">in</span>
+				{{ macros.spacer() }}
+				<select class="ui selection dropdown" id="market">
+					<option value="1">Saudi</option>
+				</select>
+			</span>
+			<span class="ui orange large header">to go Up / Down </span>
+			{{ macros.spacer() }}
+			<div class="ui input">
+				<input type="text" style="width: 5em" value="{{ days_before }}" id="days_before"/>
+			</div>
+			{{ macros.spacer(0.1) }}
+			<span class="ui orange large header"> days before and </span>
+			{{ macros.spacer(0.1) }}
+			<div class="ui input">
+				<input type="text" style="width: 5em" value="{{ days_after }}" id="days_after">
+			</div>
+			<span class="ui orange large header"> days after </span>
+			{{ macros.select_by_dict_list("event_group", event_groups, selected_event_group, searchable=True) }}
+			<div style="width: .5em; display: inline-block"></div>
+			<button class="ui button" id="ask_question"> ?</button>
+        </div>
+    </div>
+
+    <div class="ui styled fluid accordion">
+	  	<div class="title">
+		    <i class="dropdown icon"></i>
+		    Filters
+	  	</div>
+		<div class="content">
+		    <label>Show Top: </label>{{ macros.select_by_range("top_n", 10, 100, 10) }}
+	  	</div>
+  	</div>
+
+    <table class="ui celled openended table">
+        <thead>
+        <tr class="center aligned">
+            <th class="five wide">Companies</th>
+            <th class="three wide">Before {{ days_before }} days</th>
+            <th class="three wide">After {{ days_after }} days</th>
+            <th class="two wide">Discover more</th>
+        </tr>
+        </thead>
+        <tbody id="result_box">
+        </tbody>
+    </table>
+
+<div id="gears_loader" style="display: none;">
+<tr>
+	<td colspan="4" class="center aligned">
+		<img src="{{ url_for('static', filename='images/loading-gears.gif') }}">
+	</td>
+</tr>
+</div>
+{% endblock %}
+{% block page_js %}
+<script type="text/javascript">
+	$(function() {
+		$('.ui.dropdown').dropdown();
+		$('.menu .item').tab();
+		$('.ui.accordion').accordion();
+
+		$('#ask_question').on('click', function (e) {
+			askQuestion();
+		});
+
+		askQuestion();
+	});
+
+	function getQuestionParameters() {
+		return({
+			setid: $('#stock_entity_type').val(),
+			days_before: $('#days_before') .val(),
+			days_after: $('#days_after') .val(),
+			event_group_id: $('#event_group') .val()
+		});
+	}
+
+	function askQuestion() {
+		p = getQuestionParameters();
+
+		$('#result_box').html($('#gears_loader').html());
+
+		loadWithAjax('{{ url_for('.q4_aggregate_probabilities_partial') }}' + '/' + p.setid + '/' + p.days_before + '/' + p.days_after +
+				'/' + p.event_group_id,
+			// Success Handler
+			function(data) {
+				$('#result_box').html(data);
+			});
+	}	
+</script>
+{% endblock %}

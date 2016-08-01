@@ -14,8 +14,8 @@ SQL_ALCHEMY_DB_URL = "sqlite:///" + NEW_DB_PATH
 # This config is used specifically by flask_sqlalchemy
 SQLALCHEMY_DATABASE_URI = SQL_ALCHEMY_DB_URL
 
-# HOST = "0.0.0.0"
-HOST = None
+HOST = "0.0.0.0"
+# HOST = None
 PORT = 5001
 
 _ARGAAM_MSSQL_SERVER_IP = '172.16.3.65'
