@@ -1,8 +1,11 @@
-import sqlite3, datetime
-from webapp.config import NEW_DB_PATH
+# THE REASON THIS FILE IS IN THE ROOT FOLDER IS BECUASE I NEED TO RUN IT INDEPENDENTLY & DIRECTLY FROM THE COMMAND PROMPT
+# AND DUE TO THAT IT FUCKING WELL CANNOT FIND THE webapp IN THE PYTHONPATH IF ITS KEPT A SUBDIRECTORY
+import sqlite3, datetime, os
+import webapp.config as config
+from webapp.data_access import _get_open_db_connection, _close_db_connection
 
 def do_work():
-    conn = sqlite3.connect(NEW_DB_PATH)
+    conn = _get_open_db_connection()
     cursor = conn.cursor()
 
     event_grp_id = cursor.execute("select id from event_groups where name_en = ?", ('Company Earning Announcements',)).fetchone()[0]
@@ -61,6 +64,16 @@ def do_work():
                         (True, datetime.datetime.now(), 'Sabic Q4-2015', 1, datetime.date(2016,1,16), company_id, event_grp_id),
                         ])
     conn.commit()
-    conn.close()
+    _close_db_connection(conn)
+
+def do_work2():
+    conn = _get_open_db_connection()
+    cursor = conn.cursor()
+
+    event_grp_id = cursor.execute("select id from event_groups where name_en = ?", ('Company Earning Announcements',)).fetchone()[0]
+    print(event_grp_id)
+
+    _close_db_connection(conn)
 
 # do_work()
+# do_work2()

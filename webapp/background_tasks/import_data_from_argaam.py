@@ -7,14 +7,14 @@ from webapp.app import db
 from webapp.config import configs, ENVAR_FINTECH_CONFIG
 from webapp.data_access.sqlalchemy_models import Market, Sector, Company, Commodity, StockPrice
 
-def _get_connection(as_dict=False):
+def _get_mssql_connection(as_dict=False):
     config = configs[os.getenv(ENVAR_FINTECH_CONFIG)]
     return pymssql.connect(config.ARGAAM_MSSQL_SERVER_IP, config.ARGAAM_MSSQL_DB_USER_NAME,
                            config.ARGAAM_MSSQL_DB_PWD, config.ARGAAM_MSSQL_DB_NAME,
                            as_dict=as_dict)
 
 def fetch_and_add_markets():
-    conn = _get_connection(True)
+    conn = _get_mssql_connection(True)
     cur = conn.cursor()
 
     cur.execute(
@@ -38,7 +38,7 @@ def fetch_and_add_markets():
 
 
 def fetch_and_add_sectors():
-    conn = _get_connection(True)
+    conn = _get_mssql_connection(True)
     cur = conn.cursor()
 
     cur.execute("SELECT s.sectorid, s.sectornameen, s.sectornamear FROM MarketSectors ms\
@@ -62,7 +62,7 @@ def fetch_and_add_sectors():
 
 
 def fetch_and_add_companies():
-    conn = _get_connection(True)
+    conn = _get_mssql_connection(True)
     cur = conn.cursor()
 
     cur.execute("""SELECT msc.marketid, msc.companyid, msc.companynameen, msc.companynamear, msc.shortnameen, msc.shortnamear,
@@ -93,7 +93,7 @@ def fetch_and_add_companies():
 
 
 def fetch_and_add_commodities():
-    conn = _get_connection(True)
+    conn = _get_mssql_connection(True)
     cur = conn.cursor()
 
     cur.execute("SELECT commodityid, commoditynameen, commoditynamear FROM CommodityStockPrices WHERE IsVisible = 1")
@@ -115,7 +115,7 @@ def fetch_and_add_commodities():
 
 
 def fetch_and_add_commodity_prices():
-    conn = _get_connection()
+    conn = _get_mssql_connection()
     cur = conn.cursor()
 
     # get all commodities registered with fintech db, along with their last (most recent) archive date
@@ -186,7 +186,7 @@ def fetch_and_add_commodity_prices():
 
 
 def fetch_and_add_company_prices():
-    conn = _get_connection()
+    conn = _get_mssql_connection()
     cur = conn.cursor()
 
     # get all companies registered with fintech db, along with their last (most recent) archive date
@@ -255,7 +255,7 @@ def fetch_and_add_company_prices():
 
 
 def fetch_and_add_market_prices():
-    conn = _get_connection()
+    conn = _get_mssql_connection()
     cur = conn.cursor()
 
     # get all markets registered with fintech db, along with their last (most recent) archive date
@@ -325,7 +325,7 @@ def fetch_and_add_market_prices():
 
 
 def fetch_and_add_sector_prices():
-    conn = _get_connection()
+    conn = _get_mssql_connection()
     cur = conn.cursor()
 
     # get all sectors registered with fintech db, along with their last (most recent) archive date
