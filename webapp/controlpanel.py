@@ -4,7 +4,7 @@ import flask_login
 from flask import redirect, url_for, request, Markup
 from flask_admin import Admin, expose, helpers, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
-from webapp.data_access.sqlalchemy_models import User, EventCategory, Event,Country, Company, Market, Sector, Commodity
+from webapp.data_access.sqlalchemy_models import User, EventGroup, EventCategory, Event,Country, Company, Market, Sector, Commodity
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import form, fields, validators
 from .app import theapp, db
@@ -128,8 +128,10 @@ class UserModelView(AdminModelView):
 
     def on_model_change(self, form, model, is_created):
         super(UserModelView, self).on_model_change(form, model, is_created)
-        model.password = generate_password_hash(form.password.data)        
-        
+        model.password = generate_password_hash(form.password.data)
+
+class EventGroupModelView(AdminModelView):
+    form_columns = column_list = ['name_en', 'name_ar']
 
 class EventCategoryModelView(AdminModelView):
     can_view_details = True
@@ -154,20 +156,18 @@ class EventCategoryModelView(AdminModelView):
     def _get_parent_list(self):
         return self.session.query(EventCategory).filter_by(is_subcategory=False).all()
 
-
 class EventModelView(AdminModelView):
+    form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'event_group', 'company']
+    form_edit_rules = form_create_rules = ('event_group', 'name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company')
     
-    form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'event_category', 'company']
-    form_edit_rules = form_create_rules = ('event_category','name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company')
+    column_filters = ('event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
     
-    column_filters = ('event_category.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
-    
-    def formatUserType(view, context, model, name):
+    def formatEventType(view, context, model, name):
         typesDict = { 1: 'Single day event', 2: 'Range date event'}
         return Markup('{}'.format(typesDict[model.type]))
 
     column_formatters = {
-       'type': formatUserType
+       'type': formatEventType
     }
 
     form_overrides = dict(
@@ -183,12 +183,11 @@ class EventModelView(AdminModelView):
             ]
         )
     )
-    
 
     def on_model_change(self, form, model, is_created):
         super(EventModelView, self).on_model_change(form, model, is_created)
         if model.company_id == '':
-            model.company_id = None        
+            model.company_id = None
 
 class MetaDataAdminModelView(AdminModelView):
      column_list = ['argaam_id', 'name_en', 'name_ar', 'short_name_en', 'short_name_ar']
@@ -202,7 +201,8 @@ admin = Admin(theapp, name='Fintech CP', index_view = FintechAdminIndexView(), b
 ### Add the ModelViews      ###
 ###############################Country, Markets, Sectors, Companies, Commodities
 admin.add_view(UserModelView(User, db.session))
-admin.add_view(EventCategoryModelView(EventCategory, db.session))
+# admin.add_view(EventCategoryModelView(EventCategory, db.session))
+admin.add_view(EventGroupModelView(EventGroup, db.session))
 admin.add_view(EventModelView(Event, db.session))
 admin.add_view(MetaDataAdminModelView(Country, db.session, category ="Meta Data"))
 admin.add_view(MetaDataAdminModelView(Market, db.session, category ="Meta Data"))

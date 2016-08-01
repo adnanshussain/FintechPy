@@ -166,37 +166,64 @@ def what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_
                                                                                           days_before, days_after):
     conn = _get_open_db_connection(use_row_factory=False, register_udfs=True)
 
+    # To be used in the single stock entity query
+    # sql = """
+    #         select for_date from stock_prices
+    #         where stock_entity_type_id = 1
+    #           and stock_entity_id = 46
+    #           and for_date <= '2013-06-14'
+    #           order by for_date desc limit 1;
+    #       """
+
     sql = """
             select sp1.stock_entity_id, e.name_en, e.name_ar, e.short_name_en, e.short_name_ar,
 			      sp2.for_date, sp2.close, cp(sp2.close, sp1.close),
 			      sp1.for_date, sp1.close, cp(sp1.close, sp3.close),
 			      sp3.for_date, sp3.close
             from stock_prices as sp1
-            inner join stock_prices as sp2 on
+            inner join stock_prices as sp2
+            inner join stock_prices sp3
+            inner join {entity} e on
                 sp1.stock_entity_type_id = ?
                 {seid}
+                and sp1.for_date > date(?, '-2 months')
+                and sp1.for_date < date(?, '1 months')
                 and sp1.for_date = ?
+
                 and sp1.stock_entity_type_id = sp2.stock_entity_type_id
                 and sp1.stock_entity_id = sp2.stock_entity_id
-                and sp2.for_date = (select for_date from stock_prices where stock_entity_type_id = sp1.stock_entity_type_id
-                                                and stock_entity_id = sp1.stock_entity_id and for_date < sp1.for_date
-                                                order by for_date desc limit 1 offset ?)
-            inner join stock_prices sp3 on
-                sp1.stock_entity_type_id = sp3.stock_entity_type_id
+                and sp2.for_date = (select for_date from stock_prices
+                                      where for_date <= sp1.for_date
+                                        and stock_entity_id = sp1.stock_entity_id
+                                        and stock_entity_type_id = sp1.stock_entity_type_id
+                                        order by for_date desc limit 1 offset ?)
+
+                and sp1.stock_entity_type_id = sp3.stock_entity_type_id
                 and sp1.stock_entity_id = sp3.stock_entity_id
-                and sp3.for_date = (select for_date from stock_prices where stock_entity_type_id = sp1.stock_entity_type_id
-                                                and stock_entity_id = sp1.stock_entity_id and for_date > sp1.for_date
-                                                order by for_date asc limit 1 offset ?)
-            inner join {entity} e on
-	            sp1.stock_entity_id = e.id;
+                and sp3.for_date = (select for_date from stock_prices
+                                        where for_date > sp1.for_date
+                                        and stock_entity_id = sp1.stock_entity_id
+                                        and stock_entity_type_id = sp1.stock_entity_type_id
+                                        order by for_date desc limit 1 offset ?)
+
+	            and sp1.stock_entity_id = e.id;
            """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id], seid='' if se_id is None else 'and sp1.stock_entity_id = ?')
 
-    cursor = conn.execute(sql, (set_id, date_of_event, days_before-1, days_after-1) if se_id  is None
-                          else (set_id, se_id, date_of_event, days_before-1, days_after-1))
+    cursor = conn.execute(sql, (set_id, date_of_event, date_of_event, date_of_event, days_before-1, days_after-1) if se_id  is None
+                          else (set_id, se_id, date_of_event, date_of_event, date_of_event, days_before-1, days_after-1))
 
     result = { 'main_data': [dict(name_en=r[1], cp_before=r[7], cp_after=r[10]) for r in cursor.fetchall()] }
 
     _close_db_connection(conn)
+
+    return result
+
+def what_is_the_effect_of_event_group_on_stock_entity(set_id, se_id, eg_id, days_before, days_afer):
+    conn = _get_open_db_connection(use_row_factory=False, register_udfs=True)
+
+
+
+    result = {}
 
     return result
 
@@ -211,4 +238,4 @@ def test():
     for r in result['main_data']:
         print(r)
 
-# test()
+test()

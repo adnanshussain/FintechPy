@@ -1,6 +1,6 @@
-from webapp.app import db
+from webapp.app import db, config
 from flask_login import UserMixin
-from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, Boolean, ForeignKey, create_engine
 from sqlalchemy.orm import relationship, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from datetime import datetime
@@ -28,7 +28,7 @@ def short_name_ar_default(context):
 ##################################################################
 ###  Base classes for fields that are common across all tables ###
 ##################################################################
-class FintechModelBaseMixin:
+class CommonModelBaseMixin:
     # @declared_attr
     # def __tablename__(cls):
     #     return cls.__name__.lower()
@@ -50,7 +50,7 @@ class FintechModelBaseMixin:
 
     modified_on = Column(DateTime, nullable=True)
 
-class FintechStockModelBaseMixin:
+class StockModelBaseMixin:
     id = Column(Integer, primary_key=True, autoincrement=True)
     argaam_id = Column(Integer, nullable=True)
     name_en = Column(String)
@@ -61,7 +61,7 @@ class FintechStockModelBaseMixin:
 ###############################
 ###  User Table             ###
 ###############################
-class User(UserMixin, FintechModelBaseMixin, db.Model):
+class User(UserMixin, CommonModelBaseMixin, db.Model):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -72,7 +72,7 @@ class User(UserMixin, FintechModelBaseMixin, db.Model):
 ###############################
 ###  Countries Table        ###
 ###############################
-class Country(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
+class Country(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
     __tablename__ = "countries"
 
     def __str__(self):
@@ -80,7 +80,7 @@ class Country(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
 ###############################
 ###  Markets Table          ###
 ###############################
-class Market(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
+class Market(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
     __tablename__ = "markets"
 
     symbol = Column(String)
@@ -93,13 +93,13 @@ class Market(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
 ###############################
 ###  Sectors Table          ###
 ###############################
-class Sector(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
+class Sector(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
     __tablename__ = "sectors"
 
 ###############################
 ###  Companies Table        ###
 ###############################
-class Company(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
+class Company(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
     __tablename__ = "companies"
 
     stock_symbol = Column(String)
@@ -113,7 +113,7 @@ class Company(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
 ###############################
 ###  Commodities Table      ###
 ###############################
-class Commodity(FintechModelBaseMixin, FintechStockModelBaseMixin, db.Model):
+class Commodity(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
     __tablename__ = "commodities"
 
 ###############################
@@ -145,7 +145,7 @@ class StockPrice(db.Model):
 ###############################
 ###  Event Categories Table ###
 ###############################
-class EventCategory(FintechModelBaseMixin, db.Model):
+class EventCategory(CommonModelBaseMixin, db.Model):
     __tablename__ = "event_categories"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -160,9 +160,22 @@ class EventCategory(FintechModelBaseMixin, db.Model):
         return self.name_en
 
 ###############################
+###  Event Groups Table ###
+###############################
+class EventGroup(CommonModelBaseMixin, db.Model):
+    __tablename__ = "event_groups"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name_en = Column(String)
+    name_ar = Column(String)
+
+    def __str__(self):
+        return self.name_en
+
+###############################
 ###  Events Table           ###
 ###############################
-class Event(FintechModelBaseMixin, db.Model):
+class Event(CommonModelBaseMixin, db.Model):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -171,11 +184,13 @@ class Event(FintechModelBaseMixin, db.Model):
     type = Column(Integer, default=1) # 1 = single day event, 2 = range date event
     starts_on = Column(Date)
     ends_on = Column(Date, nullable=True)
-    company_id = Column(Integer, nullable=True)
-    company_id = Column(Integer, ForeignKey(Company.id), nullable=True)
-    company = relationship(Company, backref="events")   
-    event_category_id = Column(Integer, ForeignKey(EventCategory.id),nullable=False)
+    # company_id = Column(Integer, nullable=True)
+    company_id = Column(Integer, ForeignKey(Company.id))
+    company = relationship(Company, backref="events")
+    event_category_id = Column(Integer, ForeignKey(EventCategory.id))
     event_category = relationship(EventCategory, backref="events")
+    event_group_id = Column(Integer, ForeignKey(EventGroup.id), nullable=False)
+    event_group = relationship(EventGroup, backref="events")
     
     def __str__(self):
         return self.name_en
@@ -238,6 +253,13 @@ db.create_all()
 ########################################
 ### Create 1st User if doesn't exist ###
 ########################################
+# sql_engine = create_engine(config.SQL_ALCHEMY_DB_URL, echo=False)
+# DbSession = sessionmaker(bind=sql_engine)
+# session = DbSession()
+#
+# for u in session.query(User).all():
+#     print(u.email)
+
 if db.session.query(User.id).filter(User.email == 'fintechadmin@danatev.com').scalar() is None:
     user = User()
     user.email = 'fintechadmin@danatev.com'

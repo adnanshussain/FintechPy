@@ -29,6 +29,7 @@ def load_user(user_id):
 ###############################
 ### Initialize CP           ###
 ###############################
+from . import controlpanel
 
 ###############################
 ### Register Blueprints     ###
