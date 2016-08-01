@@ -398,12 +398,12 @@ def fetch_and_add_sector_prices():
 
 print(__name__, ' got executed')
 
-# fetch_and_add_markets()
-# fetch_and_add_sectors()
-# fetch_and_add_companies()
-# fetch_and_add_commodities()
-#
-# fetch_and_add_sector_prices()
-# fetch_and_add_market_prices()
-# fetch_and_add_company_prices()
-# fetch_and_add_commodity_prices()
+fetch_and_add_markets()
+fetch_and_add_sectors()
+fetch_and_add_companies()
+fetch_and_add_commodities()
+
+fetch_and_add_sector_prices()
+fetch_and_add_market_prices()
+fetch_and_add_company_prices()
+fetch_and_add_commodity_prices()
