@@ -1,3 +1,4 @@
+import os
 import flask_login
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -7,7 +8,7 @@ from webapp import config
 ### Create the App ###
 ######################
 theapp = Flask(__name__)
-theapp.config.from_object(config)
+theapp.config.from_object(config.configs[os.getenv(config.ENVAR_FINTECH_CONFIG)])
 
 db = SQLAlchemy(theapp)
 

@@ -1,18 +1,17 @@
 import pymssql
 from datetime import datetime
+import os
 
 from sqlalchemy.sql import func, select
 from webapp.app import db
-from webapp.config import _ARGAAM_MSSQL_SERVER_IP, _ARGAAM_MSSQL_DB_USER_NAME, _ARGAAM_MSSQL_DB_PWD, \
-    _ARGAAM_MSSQL_DB_NAME
+from webapp.config import configs, ENVAR_FINTECH_CONFIG
 from webapp.data_access.sqlalchemy_models import Market, Sector, Company, Commodity, StockPrice
 
-
 def _get_connection(as_dict=False):
-    return pymssql.connect(_ARGAAM_MSSQL_SERVER_IP, _ARGAAM_MSSQL_DB_USER_NAME,
-                           _ARGAAM_MSSQL_DB_PWD, _ARGAAM_MSSQL_DB_NAME,
+    config = configs[os.getenv(ENVAR_FINTECH_CONFIG)]
+    return pymssql.connect(config.ARGAAM_MSSQL_SERVER_IP, config.ARGAAM_MSSQL_DB_USER_NAME,
+                           config.ARGAAM_MSSQL_DB_PWD, config.ARGAAM_MSSQL_DB_NAME,
                            as_dict=as_dict)
-
 
 def fetch_and_add_markets():
     conn = _get_connection(True)
@@ -399,12 +398,12 @@ def fetch_and_add_sector_prices():
 
 print(__name__, ' got executed')
 
-fetch_and_add_markets()
-fetch_and_add_sectors()
-fetch_and_add_companies()
-fetch_and_add_commodities()
-
-fetch_and_add_sector_prices()
-fetch_and_add_market_prices()
-fetch_and_add_company_prices()
-fetch_and_add_commodity_prices()
+# fetch_and_add_markets()
+# fetch_and_add_sectors()
+# fetch_and_add_companies()
+# fetch_and_add_commodities()
+#
+# fetch_and_add_sector_prices()
+# fetch_and_add_market_prices()
+# fetch_and_add_company_prices()
+# fetch_and_add_commodity_prices()
