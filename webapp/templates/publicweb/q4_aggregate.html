@@ -48,8 +48,8 @@
         <thead>
         <tr class="center aligned">
             <th class="five wide">Companies</th>
-            <th class="three wide">Before {{ days_before }} days</th>
-            <th class="three wide">After {{ days_after }} days</th>
+            <th id="days_before_header" class="three wide">Before {{ days_before }} days</th>
+            <th id="days_after_header" class="three wide">After {{ days_after }} days</th>
             <th class="two wide">Discover more</th>
         </tr>
         </thead>
@@ -89,6 +89,8 @@
 				'/' + p.event_date,
 			// Success Handler
 			function(data) {
+				$('#days_before_header').html("Before " + p.days_before + " days");
+				$('#days_after_header').html("After " + p.days_after + " days");
 				$('#result_box').html(data);
 			});
 	}	
