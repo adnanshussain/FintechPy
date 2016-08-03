@@ -12,6 +12,11 @@ def get_all_event_groups():
                         select eg.name_en, eg.id from event_groups eg;
                       """)]
 
+def get_all_companies():
+    return [dict(text=r[0], value=r[1]) for r in _fetch_all("""
+                        select c.short_name_en, c.id from companies c;
+                      """)]
+
 # print(get_all_events())
 
 

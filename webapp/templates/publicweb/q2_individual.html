@@ -67,6 +67,8 @@
 	function askQuestion() {
 		p = getQuestionParameters();
 
+		$('#result_box').html($('#gears_loader tr').html());
+
 		loadWithAjax('{{ url_for('.q2_individual_partial') }}' + '/' + p.setid + '/' + p.seid + '/' + p.from_yr + '/' + p.to_yr,
 			// Success Handler
 			function(data) {

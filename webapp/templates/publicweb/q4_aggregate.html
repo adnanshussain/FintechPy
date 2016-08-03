@@ -83,6 +83,8 @@
 	function askQuestion() {
 		p = getQuestionParameters();
 
+		$('#result_box').html($('#gears_loader tr').html());
+
 		loadWithAjax('{{ url_for('.q4_aggregate_partial') }}' + '/' + p.setid + '/' + p.days_before + '/' + p.days_after +
 				'/' + p.event_date,
 			// Success Handler

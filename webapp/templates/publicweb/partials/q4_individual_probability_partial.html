@@ -1,0 +1,17 @@
+{% for d in result.main_data %}
+    <tr class="center aligned">
+        <td>{{ d['event_date'] }}</td>
+        <td>{{ '{:.2f}'.format(d['perf_before']) }}%</td>
+        <td>{{ '{:.2f}'.format(d['perf_after']) }}%</td>
+    </tr>
+{% endfor %}
+<tr class="center aligned">
+    <td>Aggregate Performance</td>
+    <td>{{ '{:.2f}'.format(result['ap_before']) }}%</td>
+    <td>{{ '{:.2f}'.format(result['ap_after']) }}%</td>
+</tr>
+<tr class="center aligned">
+    <td>Aggregate Probability</td>
+    <td>{{ '{:.2f}'.format(result['up_prob_before']) }} % Up, {{ '{:.2f}'.format(result['down_prob_before']) }}% Down</td>
+    <td>{{ '{:.2f}'.format(result['up_prob_after']) }}% Up, {{ '{:.2f}'.format(result['down_prob_after']) }}% Down </td>
+</tr>

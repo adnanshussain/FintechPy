@@ -221,7 +221,7 @@ def what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_
 
     return result
 
-def what_is_the_effect_of_event_group_on_stock_entities(set_id, se_id, eg_id, days_before, days_after):
+def what_is_the_effect_of_event_group_on_stock_entities(set_id, eg_id, days_before, days_after):
     conn = _get_open_db_connection(use_row_factory=False, register_udfs=True)
 
     sql = """
@@ -248,8 +248,6 @@ def what_is_the_effect_of_event_group_on_stock_entities(set_id, se_id, eg_id, da
             inner join {entity} e on
                 sp1.stock_entity_type_id = :setid
                 and ev.event_group_id = :egid
-                --and sp1.stock_entity_id IN (SELECT id from companies LIMIT 10)
-                {seid}
                 and sp1.for_date > date(ev.starts_on, '-1 months')
                 and sp1.for_date < date(ev.starts_on, '1 months')
 
@@ -279,13 +277,10 @@ def what_is_the_effect_of_event_group_on_stock_entities(set_id, se_id, eg_id, da
 
                 and sp1.stock_entity_id = e.id
                 group by sp1.stock_entity_id;
-           """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id],
-                      seid='' if se_id is None else 'and sp1.stock_entity_id = :seid')
+           """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id])
 
 
     params = {"setid": set_id, "egid": eg_id, "days_before": days_before - 1, "days_after": days_after - 1}
-    if se_id is not None:
-        params.update({ "seid": se_id})
 
     cursor = conn.execute(sql, params)
 
@@ -299,16 +294,101 @@ def what_is_the_effect_of_event_group_on_stock_entities(set_id, se_id, eg_id, da
 
     return result
 
+def what_was_the_effect_of_an_event_group_on_a_stock_entity(setid, seid, egid, days_before, days_after):
+    conn = _get_open_db_connection(use_row_factory=False, register_udfs=False)
+
+    sql = """
+            select  sp1.stock_entity_id,
+                    e.name_en,
+                    e.name_ar,
+				    e.short_name_en,
+				    e.short_name_ar,
+			        sp2.for_date,
+			        sp2.close,
+			        ((sp1.close - sp2.close) / sp2.close) * 100,
+			        sp1.for_date,
+			        sp1.close,
+			        ((sp3.close - sp1.close) / sp1.close) * 100,
+			        sp3.for_date,
+			        sp3.close,
+			        ev.starts_on
+			from stock_prices as sp1
+            inner join stock_prices as sp2
+            inner join stock_prices sp3
+            inner join events ev
+            inner join {entity} e on
+                sp1.stock_entity_type_id = :setid
+                and ev.event_group_id = :egid
+                and sp1.stock_entity_id = :seid
+                and sp1.for_date > date(ev.starts_on, '-1 months')
+                and sp1.for_date < date(ev.starts_on, '1 months')
+
+                and sp1.stock_entity_type_id = sp2.stock_entity_type_id
+                and sp1.stock_entity_id = sp2.stock_entity_id
+                and sp1.stock_entity_type_id = sp3.stock_entity_type_id
+                and sp1.stock_entity_id = sp3.stock_entity_id
+
+                and sp1.for_date = (select for_date from stock_prices
+                                        where for_date > date(ev.starts_on, '-1 months')
+                                        and for_date <= ev.starts_on
+                                        and stock_entity_id = sp1.stock_entity_id
+                                        and stock_entity_type_id = sp1.stock_entity_type_id
+                                        ORDER BY for_date DESC LIMIT 1)
+                and sp2.for_date = (select for_date from stock_prices
+                                        where for_date > date(ev.starts_on, '-1 months')
+                                        and	for_date < sp1.for_date
+                                        and stock_entity_id = sp1.stock_entity_id
+                                        and stock_entity_type_id = sp1.stock_entity_type_id
+                                        order by for_date desc limit 1 offset :days_before)
+                and sp3.for_date = (select for_date from stock_prices
+                                        where for_date < date(ev.starts_on, '1 months')
+                                        and for_date > sp1.for_date
+                                        and stock_entity_id = sp1.stock_entity_id
+                                        and stock_entity_type_id = sp1.stock_entity_type_id
+                                        order by for_date asc limit 1 offset :days_after)
+
+                and sp1.stock_entity_id = e.id
+                ORDER BY sp1.for_date;
+           """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[setid])
+
+
+    params = {"setid": setid, "seid": seid, "egid": egid, "days_before": days_before - 1, "days_after": days_after - 1}
+
+    cursor = conn.execute(sql, params)
+
+    result_1 = [dict(id=r[0], name_en=r[1], perf_before=r[7], perf_after=r[10], event_date=r[13]) for r in cursor.fetchall()]
+
+    up_times_before = sum(1 for r in result_1 if r['perf_before'] >= 0)
+    down_times_before = sum(1 for r in result_1 if r['perf_before'] < 0)
+    up_times_after = sum(1 for r in result_1 if r['perf_after'] >= 0)
+    down_times_after = sum(1 for r in result_1 if r['perf_after'] < 0)
+
+    result = { 'main_data': result_1,
+               'ap_before': sum(r['perf_before'] for r in result_1),
+               'ap_after': sum(r['perf_after'] for r in result_1),
+               'up_prob_before': up_times_before / (up_times_before + down_times_before) * 100,
+               'down_prob_before': down_times_before / (up_times_before + down_times_before) * 100,
+               'up_prob_after': up_times_after / (up_times_after + down_times_after) * 100,
+               'down_prob_after': down_times_after / (up_times_after + down_times_after) * 100
+               }
+
+    _close_db_connection(conn)
+
+    return result
+
 ###############################
 ### Testing Code...         ###
 ###############################
 # for_date = datetime.datetime.strptime('2015-01-21', '%Y-%m-%d')
 
 def test():
-    result = what_is_the_effect_of_event_group_on_stock_entities(1, None, 2, 3, 3)
+    result = what_was_the_effect_of_an_event_group_on_a_stock_entity(1, 22, 2, 3, 3)
 
     for r in result['main_data']:
         print(r)
+
+    for k, v in result.items():
+        print(k, v)
 
 # test()
 
