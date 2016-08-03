@@ -348,7 +348,7 @@ def what_was_the_effect_of_an_event_group_on_a_stock_entity(setid, seid, egid, d
                                         order by for_date asc limit 1 offset :days_after)
 
                 and sp1.stock_entity_id = e.id
-                ORDER BY sp1.for_date;
+                ORDER BY ev.starts_on;
            """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[setid])
 
 
