@@ -1,6 +1,6 @@
 import os
 import flask_login
-from flask import Flask
+from flask import Flask, flash
 from flask_sqlalchemy import SQLAlchemy
 from webapp import config
 

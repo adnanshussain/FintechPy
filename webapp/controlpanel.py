@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import flask_login
-from flask import redirect, url_for, request, Markup
+from flask import redirect, url_for, flash, request, Markup
 from flask_admin import Admin, expose, helpers, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 from webapp.data_access.sqlalchemy_models import User, EventGroup, EventCategory, Event,Country, Company, Market, Sector, Commodity
@@ -19,6 +19,7 @@ class LoginForm(form.Form):
         user = self.get_user()
 
         if user is None:
+            #flash('Invalid user')
             raise validators.ValidationError('Invalid user')
 
         # we're comparing the plaintext pw with the the hash from the db
@@ -63,7 +64,7 @@ class FintechAdminIndexView(AdminIndexView):
         if helpers.validate_form_on_submit(form):
             user = form.get_user()
             flask_login.login_user(user)
-
+        #flash('You were successfully logged in')
         if flask_login.current_user.is_authenticated:
             return redirect(url_for('.index'))
         # link = '<p>Don\'t have an account? <a href="' + url_for('.register_view') + '">Click here to register.</a></p>'
@@ -161,7 +162,7 @@ class EventModelView(AdminModelView):
     form_edit_rules = form_create_rules = ('event_group', 'name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company')
     
     column_filters = ('event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
-    
+
     def formatEventType(view, context, model, name):
         typesDict = { 1: 'Single day event', 2: 'Range date event'}
         return Markup('{}'.format(typesDict[model.type]))
@@ -181,7 +182,9 @@ class EventModelView(AdminModelView):
                 ('1', 'Single day event'),
                 ('2', 'Range date event')
             ]
-        )
+        ),
+
+
     )
 
     def on_model_change(self, form, model, is_created):

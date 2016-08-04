@@ -51,3 +51,4 @@ configs = {
 }
 
 ENVAR_FINTECH_CONFIG = 'FINTECH_CONFIG'
+os.environ['FINTECH_CONFIG'] = 'Dev'
