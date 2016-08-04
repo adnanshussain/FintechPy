@@ -133,6 +133,7 @@ class UserModelView(AdminModelView):
 
 class EventGroupModelView(AdminModelView):
     form_columns = column_list = ['name_en', 'name_ar']
+    list_template ='admin/custom_list.html'
 
 class EventCategoryModelView(AdminModelView):
     can_view_details = True
@@ -162,6 +163,18 @@ class EventModelView(AdminModelView):
     form_edit_rules = form_create_rules = ('event_group', 'name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company')
     
     column_filters = ('event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
+
+    eventcatid=2 # Set selected value for CategoryGroup dropdown
+
+    #def create_form(self):
+    #     global  eventcatid
+    #     eventcatid = request.args['event_group']
+
+    form_extra_fields = {
+        'event_group': fields.SelectField('Event Group',
+                                          choices=[(x.id, x.name_en) for x in db.session.query(EventGroup).all()],
+                                          default=eventcatid)
+    }
 
     def formatEventType(view, context, model, name):
         typesDict = { 1: 'Single day event', 2: 'Range date event'}
