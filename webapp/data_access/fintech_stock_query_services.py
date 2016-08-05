@@ -276,7 +276,8 @@ def what_is_the_effect_of_event_group_on_stock_entities(set_id, eg_id, days_befo
                                         order by for_date asc limit 1 offset :days_after)
 
                 and sp1.stock_entity_id = e.id
-                group by sp1.stock_entity_id;
+                group by sp1.stock_entity_id
+                ORDER BY up_prob_before desc, up_prob_after desc;
            """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id])
 
 
@@ -287,6 +288,7 @@ def what_is_the_effect_of_event_group_on_stock_entities(set_id, eg_id, days_befo
     result_1 = [dict(id=r[0], name_en=r[1], up_prob_before=r[2], down_prob_before=r[3],
                      up_prob_after=r[4], down_prob_after=r[5]
                      ) for r in cursor.fetchall()]
+    # result_1.sort(key=lambda k: k['up_prob_before'], reverse=True)
 
     result = { 'main_data': result_1 }
 

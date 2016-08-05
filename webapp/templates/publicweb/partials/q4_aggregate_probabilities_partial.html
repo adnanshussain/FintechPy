@@ -1,8 +1,14 @@
 {% for d in result.main_data %}
+	{% set up_before_class = 'ui green label' if d['up_prob_before'] > d['down_prob_before'] else 'ui label' %}
+	{% set down_before_class = 'ui red label' if d['down_prob_before'] > d['up_prob_before'] else 'ui label' %}
+	{% set up_after_class = 'ui green label' if d['up_prob_after'] > d['down_prob_after'] else 'ui label' %}
+	{% set down_after_class = 'ui red label' if d['down_prob_after'] > d['up_prob_after'] else 'ui label' %}
     <tr class="center aligned">
         <td>{{ d['name_en'] }}</td>
-        <td>{{ '{:.2f}'.format(d['up_prob_before']) }}% Up, {{ '{:.2f}'.format(d['down_prob_before']) }}% Down</td>
-        <td>{{ '{:.2f}'.format(d['up_prob_after']) }}% Up, {{ '{:.2f}'.format(d['down_prob_after']) }}% Down</td>
+        <td><span class="{{up_before_class}}">{{ '{:.2f}'.format(d['up_prob_before']) }} %</span></td>
+        <td><span class="{{down_before_class}}">{{ '{:.2f}'.format(d['down_prob_before']) }} %</span></td>
+        <td><span class="{{up_after_class}}">{{ '{:.2f}'.format(d['up_prob_after']) }} %</span></td>
+		<td><span class="{{down_after_class}}">{{ '{:.2f}'.format(d['down_prob_after']) }} %</span></td>
         <td><a href="{{ url_for('publicweb.q4_individual_probability', seid=d['id'], days_before=days_before, days_after=days_after, event_group_id=egid) }}">Drill Down</a></td>
     </tr>
 {% endfor %}

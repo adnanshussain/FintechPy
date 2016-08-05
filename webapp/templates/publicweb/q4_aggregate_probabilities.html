@@ -48,11 +48,17 @@
     <table class="ui celled openended table">
         <thead>
         <tr class="center aligned">
-            <th class="five wide">Companies</th>
-            <th id="days_before_header" class="three wide">Before {{ days_before }} days</th>
-            <th id="days_after_header" class="three wide">After {{ days_after }} days</th>
-            <th class="two wide">Discover more</th>
+            <th rowspan="2" class="five wide">Companies</th>
+            <th colspan="2" id="days_before_header" class="three wide">Before {{ days_before }} days</th>
+            <th colspan="2" id="days_after_header" class="three wide">After {{ days_after }} days</th>
+            <th rowspan="2" class="two wide">Discover more</th>
         </tr>
+		<tr>
+			<th class="center aligned">Up %</th>
+			<th class="center aligned">Down %</th>
+			<th class="center aligned">Up %</th>
+			<th class="center aligned">Down %</th>
+		</tr>
         </thead>
         <tbody id="result_box">
         </tbody>
@@ -84,6 +90,7 @@
 	function askQuestion() {
 		p = getQuestionParameters();
 
+		$('#gears_loader tr td').attr('colspan', 6);
 		$('#result_box').html($('#gears_loader tr').html());
 
 		loadWithAjax('{{ url_for('.q4_aggregate_probabilities_partial') }}' + '/' + p.setid + '/' + p.days_before + '/' + p.days_after +

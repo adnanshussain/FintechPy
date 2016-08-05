@@ -1,17 +1,23 @@
+<tr class="center aligned">
+	<td>Aggregate Performance</td>
+	<td><span class="ui label {{ 'green' if result['ap_before'] > 0 else 'red' }}">{{ '{:.2f}'.format(result['ap_before']) }} %</span>
+	</td>
+	<td><span class="ui label {{ 'green' if result['ap_after'] > 0 else 'red' }}">{{ '{:.2f}'.format(result['ap_after']) }} %</span>
+	</td>
+</tr>
+<tr class="center aligned">
+	<td>Aggregate Probability</td>
+	<td><span class="ui label {{ 'green' if result['up_prob_before'] > result['down_prob_before'] else '' }}">{{ '{:.2f}'.format(result['up_prob_before']) }} % Up</span>
+		<span class="ui label {{ 'red' if result['down_prob_before'] > result['up_prob_before'] else '' }}">{{ '{:.2f}'.format(result['down_prob_before']) }}% Down</span>
+	</td>
+	<td><span class="ui label {{ 'green' if result['up_prob_after'] > result['down_prob_after'] else '' }}">{{ '{:.2f}'.format(result['up_prob_after']) }} % Up</span>
+		<span class="ui label {{ 'red' if result['down_prob_after'] > result['up_prob_after'] else '' }}">{{ '{:.2f}'.format(result['down_prob_after']) }}% Down</span>
+	</td>
+</tr>
 {% for d in result.main_data %}
-    <tr class="center aligned">
-        <td>{{ d['event_date'] }}</td>
-        <td>{{ '{:.2f}'.format(d['perf_before']) }}%</td>
-        <td>{{ '{:.2f}'.format(d['perf_after']) }}%</td>
-    </tr>
+<tr class="center aligned">
+	<td>{{ d['event_date'] }}</td>
+	<td><span class="ui label {{ 'green' if d['perf_before'] > 0 else 'red' if d['perf_before'] < 0 else '' }}">{{ '{:.2f}'.format(d['perf_before']) }} %</span></td>
+	<td><span class="ui label {{ 'green' if d['perf_after'] > 0 else 'red' if d['perf_after'] < 0 else '' }}">{{ '{:.2f}'.format(d['perf_after']) }} %</span></td>
+</tr>
 {% endfor %}
-<tr class="center aligned">
-    <td>Aggregate Performance</td>
-    <td>{{ '{:.2f}'.format(result['ap_before']) }}%</td>
-    <td>{{ '{:.2f}'.format(result['ap_after']) }}%</td>
-</tr>
-<tr class="center aligned">
-    <td>Aggregate Probability</td>
-    <td>{{ '{:.2f}'.format(result['up_prob_before']) }} % Up, {{ '{:.2f}'.format(result['down_prob_before']) }}% Down</td>
-    <td>{{ '{:.2f}'.format(result['up_prob_after']) }}% Up, {{ '{:.2f}'.format(result['down_prob_after']) }}% Down </td>
-</tr>
