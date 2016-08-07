@@ -50,12 +50,15 @@
         <tr class="center aligned">
             <th rowspan="2" class="five wide">Companies</th>
             <th colspan="2" id="days_before_header" class="three wide">Before {{ days_before }} days</th>
+			<th colspan="2" id="between_header" class="three wide">Between</th>
             <th colspan="2" id="days_after_header" class="three wide">After {{ days_after }} days</th>
             <th rowspan="2" class="two wide">Discover more</th>
         </tr>
 		<tr>
 			<th class="center aligned">Up %</th>
 			<th class="center aligned">Down %</th>
+			<th id="between_up" class="center aligned">Up %</th>
+			<th id="between_down" class="center aligned">Down %</th>
 			<th class="center aligned">Up %</th>
 			<th class="center aligned">Down %</th>
 		</tr>
@@ -99,6 +102,13 @@
 			function(data) {
 				$('#days_before_header').html("Before " + p.days_before + " days");
 				$('#days_after_header').html("After " + p.days_after + " days");
+
+				if(data.has_range_events) {
+					$('#between_header').style('display', 'inherit');
+					$('#between_up').style('display', 'inherit');
+					$('#between_down').style('display', 'inherit');
+				}
+
 				$('#result_box').html(data);
 			});
 	}	

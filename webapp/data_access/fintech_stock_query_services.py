@@ -225,58 +225,93 @@ def what_is_the_effect_of_event_group_on_stock_entities(set_id, eg_id, days_befo
     conn = _get_open_db_connection(use_row_factory=False, register_udfs=True)
 
     sql = """
-            select  sp1.stock_entity_id, e.name_en,
-                    count(case when ((sp1.close - sp2.close) / sp2.close) * 100 >= 0 then 1 else NULL end) * 1.0 /
-                    (count(case when ((sp1.close - sp2.close) / sp2.close) * 100 >= 0 then 1 else NULL end) +
-                        count(case when ((sp1.close - sp2.close) / sp2.close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_before,
+            select 	sp_starts_on.stock_entity_id,
+ 				e.short_name_en,
 
-                    count(case when ((sp1.close - sp2.close) / sp2.close) * 100 < 0 then 1 else NULL end) * 1.0 /
-                    (count(case when ((sp1.close - sp2.close) / sp2.close) * 100 >= 0 then 1 else NULL end) +
-                        count(case when ((sp1.close - sp2.close) / sp2.close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_before,
+                count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 >= 0 then 1 else NULL end) * 1.0 /
+                (count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 >= 0 then 1 else NULL end) +
+                    count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_before,
 
-                    count(case when ((sp3.close - sp1.close) / sp1.close) * 100 >= 0 then 1 else NULL end) * 1.0 /
-                    (count(case when ((sp3.close - sp1.close) / sp1.close) * 100 >= 0 then 1 else NULL end) +
-                        count(case when ((sp3.close - sp1.close) / sp1.close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_after,
+                count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 < 0 then 1 else NULL end) * 1.0 /
+                (count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 >= 0 then 1 else NULL end) +
+                    count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_before,
 
-                    count(case when ((sp3.close - sp1.close) / sp1.close) * 100 < 0 then 1 else NULL end) * 1.0 /
-                    (count(case when ((sp3.close - sp1.close) / sp1.close) * 100 >= 0 then 1 else NULL end) +
-                        count(case when ((sp3.close - sp1.close) / sp1.close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_after
-            from stock_prices as sp1
-            inner join stock_prices as sp2
-            inner join stock_prices sp3
-            inner join events ev
-            inner join {entity} e on
-                sp1.stock_entity_type_id = :setid
+                count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_starts_on.close) * 100 >= 0 then 1 else NULL end) * 1.0 /
+                (count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_ends_on.close) * 100 >= 0 then 1 else NULL end) +
+                    count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_ends_on.close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_between,
+
+                count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_starts_on.close) * 100 < 0 then 1 else NULL end) * 1.0 /
+                (count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_ends_on.close) * 100 >= 0 then 1 else NULL end) +
+                    count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_ends_on.close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_between,
+
+                count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 >= 0 then 1 else NULL end) * 1.0 /
+                (count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 >= 0 then 1 else NULL end) +
+                    count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_after,
+
+                count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 < 0 then 1 else NULL end) * 1.0 /
+                (count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 >= 0 then 1 else NULL end) +
+                    count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_after
+            from stock_prices as sp_starts_on
+            inner join stock_prices as sp_before_event
+            inner JOIN stock_prices as sp_ends_on
+            inner join stock_prices as sp_after_event
+            inner join events AS ev
+            inner join {entity} AS e
+                on
+                sp_starts_on.stock_entity_type_id = :setid
                 and ev.event_group_id = :egid
-                and sp1.for_date > date(ev.starts_on, '-1 months')
-                and sp1.for_date < date(ev.starts_on, '1 months')
+                --and sp_starts_on.stock_entity_id IN (SELECT id from {entity} limit 10)
 
-                and sp1.stock_entity_type_id = sp2.stock_entity_type_id
-                and sp1.stock_entity_id = sp2.stock_entity_id
-                and sp1.stock_entity_type_id = sp3.stock_entity_type_id
-                and sp1.stock_entity_id = sp3.stock_entity_id
+                and sp_starts_on.stock_entity_type_id = sp_before_event.stock_entity_type_id
+                and sp_starts_on.stock_entity_id = sp_before_event.stock_entity_id
+                and sp_starts_on.stock_entity_type_id = sp_after_event.stock_entity_type_id
+                and sp_starts_on.stock_entity_id = sp_after_event.stock_entity_id
+                and sp_starts_on.stock_entity_type_id = sp_ends_on.stock_entity_type_id
+                and sp_starts_on.stock_entity_id = sp_ends_on.stock_entity_id
 
-                and sp1.for_date = (select for_date from stock_prices
-                                        where for_date > date(ev.starts_on, '-1 months')
-                                        and for_date <= ev.starts_on
-                                        and stock_entity_id = sp1.stock_entity_id
-                                        and stock_entity_type_id = sp1.stock_entity_type_id
-                                        ORDER BY for_date DESC LIMIT 1)
-                and sp2.for_date = (select for_date from stock_prices
-                                        where for_date > date(ev.starts_on, '-1 months')
-                                        and	for_date < sp1.for_date
-                                        and stock_entity_id = sp1.stock_entity_id
-                                        and stock_entity_type_id = sp1.stock_entity_type_id
-                                        order by for_date desc limit 1 offset :days_before)
-                and sp3.for_date = (select for_date from stock_prices
-                                        where for_date < date(ev.starts_on, '1 months')
-                                        and for_date > sp1.for_date
-                                        and stock_entity_id = sp1.stock_entity_id
-                                        and stock_entity_type_id = sp1.stock_entity_type_id
-                                        order by for_date asc limit 1 offset :days_after)
+                and sp_starts_on.for_date > date(ev.starts_on, '-1 months')
+                and ((ev.ends_on is not NULL and sp_starts_on.for_date < date(ev.ends_on, '1 months'))
+                            or (ev.ends_on is NULL and sp_starts_on.for_date < date(ev.starts_on, '1 months')))
 
-                and sp1.stock_entity_id = e.id
-                group by sp1.stock_entity_id
+                and sp_starts_on.for_date = (select for_date from stock_prices
+                                                                where for_date > date(ev.starts_on, '-1 months')
+                                                                and for_date <= ev.starts_on
+                                                                and stock_entity_id = sp_starts_on.stock_entity_id
+                                                                and stock_entity_type_id = sp_starts_on.stock_entity_type_id
+                                                                ORDER BY for_date DESC LIMIT 1)
+
+                and sp_before_event.for_date = (select for_date from stock_prices
+                                                                where for_date > date(ev.starts_on, '-1 months')
+                                                                and	for_date < sp_starts_on.for_date
+                                                                and stock_entity_id = sp_starts_on.stock_entity_id
+                                                                and stock_entity_type_id = sp_starts_on.stock_entity_type_id
+                                                                order by for_date desc limit 1 offset :days_before)
+
+                and ((ev.ends_on is not null
+                            and sp_ends_on.for_date = (select for_date from stock_prices
+                                                                where for_date > date(ev.starts_on)
+                                                                and for_date <= ev.ends_on
+                                                                and stock_entity_id = sp_starts_on.stock_entity_id
+                                                                and stock_entity_type_id = sp_starts_on.stock_entity_type_id
+                                                                ORDER BY for_date DESC LIMIT 1))
+                        OR
+                         (ev.ends_on is NULL and sp_ends_on.for_date = sp_starts_on.for_date))
+
+                and sp_after_event.for_date = (select for_date from stock_prices
+                                                                where
+                                                                            ((ev.ends_on is not NULL and for_date < date(ev.ends_on, '1 months'))
+                                                                            or
+                                                                             (ev.ends_on is NULL and for_date < date(ev.starts_on, '1 months')))
+                                                                and
+                                                                            ((ev.ends_on is not NULL and for_date > ev.ends_on)
+                                                                             or
+                                                                             (ev.ends_on is NULL and for_date > sp_starts_on.for_date))
+                                                                and stock_entity_id = sp_starts_on.stock_entity_id
+                                                                and stock_entity_type_id = sp_starts_on.stock_entity_type_id
+                                                                order by for_date asc limit 1 offset :days_after)
+
+                and sp_starts_on.stock_entity_id = e.id
+                GROUP BY sp_starts_on.stock_entity_id
                 ORDER BY up_prob_before desc, up_prob_after desc;
            """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id])
 
@@ -286,13 +321,23 @@ def what_is_the_effect_of_event_group_on_stock_entities(set_id, eg_id, days_befo
     cursor = conn.execute(sql, params)
 
     result_1 = [dict(id=r[0], name_en=r[1], up_prob_before=r[2], down_prob_before=r[3],
-                     up_prob_after=r[4], down_prob_after=r[5]
+                     up_prob_between=r[4], down_prob_between=r[5],
+                     up_prob_after=r[6], down_prob_after=r[7]
                      ) for r in cursor.fetchall()]
+
+    _close_db_connection(conn)
+
     # result_1.sort(key=lambda k: k['up_prob_before'], reverse=True)
 
     result = { 'main_data': result_1 }
 
-    _close_db_connection(conn)
+    up_prob_between_count = sum(1 for r in result_1 if r['up_prob_between'] < 100)
+    down_prob_between_count = sum(1 for r in result_1 if r['down_prob_between'] > 0)
+
+    if up_prob_between_count == 0 and down_prob_between_count == 0:
+        result.update({ 'has_range_events': False })
+    else:
+        result.update({'has_range_events': True})
 
     return result
 
@@ -384,7 +429,8 @@ def what_was_the_effect_of_an_event_group_on_a_stock_entity(setid, seid, egid, d
 # for_date = datetime.datetime.strptime('2015-01-21', '%Y-%m-%d')
 
 def test():
-    result = what_was_the_effect_of_an_event_group_on_a_stock_entity(1, 22, 2, 3, 3)
+    # result = what_was_the_effect_of_an_event_group_on_a_stock_entity(1, 22, 2, 3, 3)
+    result = what_is_the_effect_of_event_group_on_stock_entities(1, 2, 3, 3)
 
     for r in result['main_data']:
         print(r)

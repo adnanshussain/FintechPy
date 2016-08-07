@@ -194,8 +194,8 @@ inner join events AS ev
 inner join companies AS e
 		on
 		sp_starts_on.stock_entity_type_id = 1
-		and ev.event_group_id = 3
- 		and sp_starts_on.stock_entity_id = 46
+		and ev.event_group_id = 2
+ 		--and sp_starts_on.stock_entity_id = 46
 
 		and sp_starts_on.stock_entity_type_id = sp_before_event.stock_entity_type_id
 		and sp_starts_on.stock_entity_id = sp_before_event.stock_entity_id
@@ -204,19 +204,19 @@ inner join companies AS e
 		and sp_starts_on.stock_entity_type_id = sp_ends_on.stock_entity_type_id
 		and sp_starts_on.stock_entity_id = sp_ends_on.stock_entity_id
 
-		and sp_starts_on.for_date > date(ev.starts_on, '-1 months')
-		and ((ev.ends_on is not NULL and sp_starts_on.for_date < date(ev.ends_on, '1 months'))
-					or (ev.ends_on is NULL and sp_starts_on.for_date < date(ev.starts_on, '1 months')))
+		and sp_starts_on.for_date > date(ev.starts_on, '-14 days')
+		and ((ev.ends_on is not NULL and sp_starts_on.for_date < date(ev.ends_on, '14 days'))
+					or (ev.ends_on is NULL and sp_starts_on.for_date < date(ev.starts_on, '14 days')))
 
 		and sp_starts_on.for_date = (select for_date from stock_prices
-														where for_date > date(ev.starts_on, '-1 months')
+														where for_date > date(ev.starts_on, '-14 days')
 														and for_date <= ev.starts_on
 														and stock_entity_id = sp_starts_on.stock_entity_id
 														and stock_entity_type_id = sp_starts_on.stock_entity_type_id
 														ORDER BY for_date DESC LIMIT 1)
 
 		and sp_before_event.for_date = (select for_date from stock_prices
-														where for_date > date(ev.starts_on, '-1 months')
+														where for_date > date(ev.starts_on, '-14 days')
 														and	for_date < sp_starts_on.for_date
 														and stock_entity_id = sp_starts_on.stock_entity_id
 														and stock_entity_type_id = sp_starts_on.stock_entity_type_id
@@ -234,9 +234,9 @@ inner join companies AS e
 
 		and sp_after_event.for_date = (select for_date from stock_prices
 														where
-																	((ev.ends_on is not NULL and for_date < date(ev.ends_on, '1 months'))
+																	((ev.ends_on is not NULL and for_date < date(ev.ends_on, '14 days'))
 																	or
-																	 (ev.ends_on is NULL and for_date < date(ev.starts_on, '1 months')))
+																	 (ev.ends_on is NULL and for_date < date(ev.starts_on, '14 days')))
 														and
 																	((ev.ends_on is not NULL and for_date > ev.ends_on)
 																	 or
@@ -247,7 +247,7 @@ inner join companies AS e
 
  		and sp_starts_on.stock_entity_id = e.id
 		GROUP BY sp_starts_on.stock_entity_id
- 		ORDER BY sp_starts_on.for_date;
+ 		ORDER BY up_prob_before desc, up_prob_after desc;
 
 select "============================================================";
 
