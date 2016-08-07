@@ -157,6 +157,14 @@ select 	sp1.stock_entity_id,
 select "============================================================";
 */
 
+create TEMP table tt_dates AS
+	select for_date from stock_prices sp
+		INNER JOIN events ev ON
+			ev.event_group_id = 3
+			and sp.for_date > date(ev.starts_on, '-14 days')
+		 and sp.for_date < ((ev.ends_on is not NULL and date(ev.ends_on, '14 days'))
+					or (ev.ends_on is NULL and date(ev.starts_on, '14 days')));
+
 /*
 	Query to fetch aggregation and compute probability of stock prices, before, after and between events.
  */
