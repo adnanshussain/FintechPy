@@ -2,6 +2,8 @@
 	<td>Aggregate Performance</td>
 	<td><span class="ui label {{ 'green' if result['ap_before'] > 0 else 'red' }}">{{ '{:.2f}'.format(result['ap_before']) }} %</span>
 	</td>
+	<td><span class="ui label {{ 'green' if result['ap_between'] > 0 else 'red' }}">{{ '{:.2f}'.format(result['ap_between']) }} %</span>
+	</td>
 	<td><span class="ui label {{ 'green' if result['ap_after'] > 0 else 'red' }}">{{ '{:.2f}'.format(result['ap_after']) }} %</span>
 	</td>
 </tr>
@@ -9,6 +11,9 @@
 	<td>Aggregate Probability</td>
 	<td><span class="ui label {{ 'green' if result['up_prob_before'] > result['down_prob_before'] else '' }}">{{ '{:.2f}'.format(result['up_prob_before']) }} % Up</span>
 		<span class="ui label {{ 'red' if result['down_prob_before'] > result['up_prob_before'] else '' }}">{{ '{:.2f}'.format(result['down_prob_before']) }}% Down</span>
+	</td>
+	<td><span class="ui label {{ 'green' if result['up_prob_between'] > result['down_prob_between'] else '' }}">{{ '{:.2f}'.format(result['up_prob_between']) }} % Up</span>
+		<span class="ui label {{ 'red' if result['down_prob_between'] > result['up_prob_between'] else '' }}">{{ '{:.2f}'.format(result['down_prob_between']) }}% Down</span>
 	</td>
 	<td><span class="ui label {{ 'green' if result['up_prob_after'] > result['down_prob_after'] else '' }}">{{ '{:.2f}'.format(result['up_prob_after']) }} % Up</span>
 		<span class="ui label {{ 'red' if result['down_prob_after'] > result['up_prob_after'] else '' }}">{{ '{:.2f}'.format(result['down_prob_after']) }}% Down</span>
@@ -18,6 +23,7 @@
 <tr class="center aligned">
 	<td>{{ d['event_date'] }}</td>
 	<td><span class="ui label {{ 'green' if d['perf_before'] > 0 else 'red' if d['perf_before'] < 0 else '' }}">{{ '{:.2f}'.format(d['perf_before']) }} %</span></td>
+	<td><span class="ui label {{ 'green' if d['perf_between'] > 0 else 'red' if d['perf_between'] < 0 else '' }}">{{ '{:.2f}'.format(d['perf_between']) }} %</span></td>
 	<td><span class="ui label {{ 'green' if d['perf_after'] > 0 else 'red' if d['perf_after'] < 0 else '' }}">{{ '{:.2f}'.format(d['perf_after']) }} %</span></td>
 </tr>
 {% endfor %}

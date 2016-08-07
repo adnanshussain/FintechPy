@@ -103,11 +103,13 @@
 				$('#days_before_header').html("Before " + p.days_before + " days");
 				$('#days_after_header').html("After " + p.days_after + " days");
 
+				/* TODO: this has to be changed to work on data not HTML
 				if(data.has_range_events) {
 					$('#between_header').style('display', 'inherit');
 					$('#between_up').style('display', 'inherit');
 					$('#between_down').style('display', 'inherit');
 				}
+				*/
 
 				$('#result_box').html(data);
 			});
