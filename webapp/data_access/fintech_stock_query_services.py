@@ -260,9 +260,8 @@ def what_is_the_effect_of_event_group_on_stock_entities(set_id, eg_id, days_befo
                 on
                 sp_starts_on.stock_entity_type_id = :setid
                 and ev.event_group_id = :egid
-                --and sp_starts_on.stock_entity_id IN (SELECT id from {entity} limit 10)
+                and sp_starts_on.stock_entity_id IN (select id from {entity} limit 20)
 
-                and sp_starts_on.stock_entity_type_id = sp_before_event.stock_entity_type_id
                 and sp_starts_on.stock_entity_id = sp_before_event.stock_entity_id
                 and sp_starts_on.stock_entity_type_id = sp_after_event.stock_entity_type_id
                 and sp_starts_on.stock_entity_id = sp_after_event.stock_entity_id
