@@ -133,6 +133,7 @@ class UserModelView(AdminModelView):
 
 class EventGroupModelView(AdminModelView):
     form_columns = column_list = ['name_en', 'name_ar']
+    list_template = 'admin/custom_listview_eventgroup.html'
 
 
 class EventCategoryModelView(AdminModelView):
@@ -164,6 +165,8 @@ class EventModelView(AdminModelView):
     
     column_filters = ('event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
 
+    create_template = 'admin/custom_create_eventform.html'  # Will Override Builtin Template.
+
     def formatEventType(view, context, model, name):
         typesDict = { 1: 'Single day event', 2: 'Range date event'}
         return Markup('{}'.format(typesDict[model.type]))
@@ -189,6 +192,7 @@ class EventModelView(AdminModelView):
         super(EventModelView, self).on_model_change(form, model, is_created)
         if model.company_id == '':
             model.company_id = None
+
 
 class MetaDataAdminModelView(AdminModelView):
      column_list = ['argaam_id', 'name_en', 'name_ar', 'short_name_en', 'short_name_ar']

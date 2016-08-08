@@ -1,0 +1,5 @@
+{% extends 'admin/model/list.html' %}
+{% block list_row_actions %}
+    {{ super() }}
+     <a href="/admin/event/new/?event_group={{get_pk_value(row)}}"> <span class="fa fa-ok glyphicon glyphicon-ok">Create-Event</span></a>
+{% endblock %}

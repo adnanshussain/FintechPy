@@ -1,0 +1,29 @@
+{% extends 'admin/model/create.html' %}
+
+{% block body %}
+   {{ super() }}
+
+    <script>
+
+        //Function for Getting Query String....
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+
+        $(document).ready(function(){
+           $( "#event_group" ).ready(function() {
+               var event_group_id = getParameterByName('event_group');  //get event_group id from query string.
+               $('#event_group option[value="'+event_group_id+'"]').prop('selected', true); //Set Selected value of event_group Dropdown.
+               var set_text_to_span=$('#event_group option:selected').text();  //get selected value text.
+               $("#select2-chosen-1").html(set_text_to_span);   //set selected value text in span tags.
+            });
+        });
+
+    </script>
+{% endblock %}
