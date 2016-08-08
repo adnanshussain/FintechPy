@@ -1,8 +1,7 @@
+**/__pycache__
 .idea 
 webapp/static/vendor/jquery.powertip-1.2.0/
 node_modules/
-webapp/__pycache__/
-webapp/data_access/__pychache__
 webapp/data/
 webapp/static/vendor/amcharts/
 webapp/static/vendor/semantic/gulpfile.js
