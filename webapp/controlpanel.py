@@ -133,7 +133,8 @@ class UserModelView(AdminModelView):
 
 class EventGroupModelView(AdminModelView):
     form_columns = column_list = ['name_en', 'name_ar']
-    list_template ='admin/custom_list.html'
+    list_template = 'admin/custom_listview_eventgroup.html'
+
 
 class EventCategoryModelView(AdminModelView):
     can_view_details = True
@@ -161,22 +162,8 @@ class EventCategoryModelView(AdminModelView):
 class EventModelView(AdminModelView):
     form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'event_group', 'company']
     form_edit_rules = form_create_rules = ('event_group', 'name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company')
-    
+
     column_filters = ('event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
-
-    # Set initial selected value for CategoryGroup dropdown
-    eventcatid=1
-
-    #def create_form(self):
-    #     global  eventcatid
-    #     eventcatid = request.args['event_group']
-
-    # This will override default form field
-    form_extra_fields = {
-        'event_group': fields.SelectField('Event Group',
-                                          choices=[(x.id, x.name_en) for x in db.session.query(EventGroup).all()], # Get data from EventGroup Model and bind with drop down
-                                          default=eventcatid) # set selected value for dropdown
-    }
 
     def formatEventType(view, context, model, name):
         typesDict = { 1: 'Single day event', 2: 'Range date event'}
@@ -186,9 +173,11 @@ class EventModelView(AdminModelView):
        'type': formatEventType
     }
 
+
     form_overrides = dict(
-        type= fields.SelectField
-        #,company_id = fields.SelectField
+        type= fields.SelectField,
+        starts_on = fields.DateField,
+        ends_on=fields.DateField
     )
 
     form_args = dict(
@@ -198,14 +187,13 @@ class EventModelView(AdminModelView):
                 ('2', 'Range date event')
             ]
         ),
-
-
     )
 
     def on_model_change(self, form, model, is_created):
         super(EventModelView, self).on_model_change(form, model, is_created)
         if model.company_id == '':
             model.company_id = None
+
 
 class MetaDataAdminModelView(AdminModelView):
      column_list = ['argaam_id', 'name_en', 'name_ar', 'short_name_en', 'short_name_ar']
