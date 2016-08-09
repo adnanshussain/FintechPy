@@ -1,4 +1,6 @@
+
 **/__pycache__
+.idea/
 webapp/static/vendor/jquery.powertip-1.2.0/
 node_modules/
 webapp/data/
@@ -15,4 +17,5 @@ env/
 FintechPy.pyproj
 FintechPy.sln
 *.tar
+
 
