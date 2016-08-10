@@ -6,49 +6,109 @@
 CREATE TEMP TABLE tt_dates_desc
 (
   for_date   DATE,
-  for_date_j INTEGER
+  for_date_j INTEGER,
+  stock_entity_type_id INTEGER,
+  stock_entity_id INTEGER
 );
 
 CREATE TEMP TABLE tt_dates_asc
 (
   for_date   DATE,
-  for_date_j INTEGER
+  for_date_j INTEGER,
+  stock_entity_type_id INTEGER,
+  stock_entity_id INTEGER
 );
 
--- EXPLAIN QUERY PLAN
+EXPLAIN QUERY PLAN
 INSERT INTO tt_dates_desc
-  SELECT DISTINCT
-    sp.for_date,
-    sp.for_date_j
-  FROM stock_prices_jd sp
-    INNER JOIN events_jd ev ON
-                              ev.event_group_id = 4
-                              AND sp.stock_entity_type_id = 1
-                              AND sp.for_date > date(ev.starts_on, '-9 days')
-                              AND ((ev.ends_on IS NOT NULL AND sp.for_date < date(ev.ends_on, '7 days'))
-                                   OR
-                                   (ev.ends_on IS NULL AND sp.for_date < date(ev.starts_on, '7 days')))
-  ORDER BY for_date DESC;
+    SELECT
+      sp.for_date, sp.for_date_j, sp.stock_entity_type_id, sp.stock_entity_id
+    FROM stock_prices_jd sp
+      INNER JOIN events_jd ev ON
+                                ev.event_group_id = 2
+                                AND sp.stock_entity_type_id = 1
+                                AND sp.for_date_j > ev.starts_on_j - 14 -- date(ev.starts_on, '-14 days')
+                                AND ((ev.ends_on IS NOT NULL AND sp.for_date_j < ev.ends_on_j + 14) --date(ev.ends_on, '14 days'))
+                                     OR
+                                     (ev.ends_on IS NULL AND sp.for_date < ev.starts_on_j + 14)) --date(ev.starts_on, '14 days')))
+--     ORDER BY for_date DESC
+;
+
+
+SELECT * from tt_dates_desc ORDER BY for_date DESC limit 100;
+
+.exit
 
 INSERT INTO tt_dates_asc
   SELECT
     for_date,
-    for_date_j
+    for_date_j,
+    stock_entity_type_id,
+    stock_entity_id
   FROM tt_dates_desc
   ORDER BY for_date;
 
---SELECT count(0) from tt_dates_desc limit 100;
-
 CREATE TEMP TABLE tt_stock_prices_jd AS
-  SELECT *
-  FROM stock_prices_jd
-  WHERE stock_entity_type_id = 1
-        AND for_date IN (SELECT for_date
-                         FROM tt_dates_desc);
+  SELECT sp.*
+  FROM stock_prices_jd sp
+    INNER JOIN tt_dates_desc dates
+  on
+    sp.stock_entity_type_id = dates.stock_entity_type_id
+      and sp.stock_entity_id = dates.stock_entity_id
+      and sp.for_date_j = dates.for_date_j;
 
--- CREATE INDEX tt_idx_sp_setid ON tt_stock_prices_jd (stock_entity_type_id);
+.mode csv
+.out sp_all.csv
 
---select count(0) from tt_stock_prices_jd ORDER BY for_date LIMIT 100;
+SELECT
+  sp_before.stock_entity_id,
+  sp_before.for_date,
+  sp_before.close,
+  sp_start.stock_entity_id,
+  sp_start.for_date,
+  sp_start.close,
+  sp_ends.stock_entity_id,
+  sp_ends.for_date,
+  sp_ends.close
+FROM tt_stock_prices_jd sp_start
+  INNER JOIN events_jd ev
+  ON
+    ev.event_group_id = 2
+    and sp_start.for_date_j = (SELECT for_date_j
+                                FROM tt_dates_desc
+                                  WHERE
+                                    for_date_j <= ev.starts_on_j
+--                                     AND for_date_j > ev.starts_on_j - 14
+                                    AND stock_entity_type_id = sp_start.stock_entity_type_id
+                                    AND stock_entity_id = sp_start.stock_entity_id
+                                 LIMIT 1)
+  INNER JOIN tt_stock_prices_jd sp_before
+  ON
+    sp_before.stock_entity_id = sp_start.stock_entity_id
+    AND sp_before.for_date_j = (SELECT for_date_j
+                             FROM tt_dates_desc
+                             WHERE
+                                for_date_j < ev.starts_on_j
+--                                 AND for_date_j > ev.starts_on_j - 14
+                                AND stock_entity_type_id = sp_before.stock_entity_type_id
+                                AND stock_entity_id = sp_before.stock_entity_id
+                             LIMIT 1
+                             OFFSET 2)
+  INNER JOIN tt_stock_prices_jd sp_ends
+  ON
+    sp_ends.stock_entity_id = sp_start.stock_entity_id
+    AND (/*(ev.ends_on NOT NULL and sp_ends.for_date_j = (SELECT for_date_j
+                                                         FROM tt_dates_desc
+                                                         WHERE
+                                                            for_date_j <= ev.ends_on_j
+                                                            AND for_date_j > ev.starts_on_j
+                                                            AND stock_entity_type_id = sp_ends.stock_entity_type_id
+                                                            AND stock_entity_id = sp_ends.stock_entity_id
+                                                         LIMIT 1))
+    OR*/ (ev.ends_on ISNULL and sp_ends.for_date_j = sp_start.for_date_j))
+  ORDER BY sp_before.stock_entity_id;
+
+.exit
 
 CREATE TEMP TABLE tt_sp_before AS
   SELECT
@@ -63,8 +123,11 @@ CREATE TEMP TABLE tt_sp_before AS
         AND ev.event_group_id = 4
         AND sp.for_date_j = (SELECT for_date_j
                              FROM tt_dates_desc
-                             WHERE for_date_j < ev.starts_on_j
-                                   AND for_date_j > ev.starts_on_j - 14
+                             WHERE
+                                for_date_j < ev.starts_on_j
+                                AND for_date_j > ev.starts_on_j - 14
+                                AND stock_entity_type_id = sp.stock_entity_type_id
+                                AND stock_entity_id = sp.stock_entity_id
                              LIMIT 1
                              OFFSET 2);
 
@@ -81,8 +144,11 @@ CREATE TEMP TABLE tt_sp_start AS
         AND ev.event_group_id = 4
         AND sp.for_date_j = (SELECT for_date_j
                              FROM tt_dates_desc
-                             WHERE for_date_j <= ev.starts_on_j
-                                   AND for_date_j > ev.starts_on_j - 14
+                             WHERE
+                               for_date_j <= ev.starts_on_j
+                                AND for_date_j > ev.starts_on_j - 14
+                                AND stock_entity_type_id = sp.stock_entity_type_id
+                                AND stock_entity_id = sp.stock_entity_id
                              LIMIT 1);
 
 CREATE TEMP TABLE tt_sp_end_1 AS
@@ -96,17 +162,19 @@ CREATE TEMP TABLE tt_sp_end_1 AS
       ON
         sp.stock_entity_type_id = 1
         AND ev.event_group_id = 4
-        AND ((ev.ends_on IS NOT NULL AND sp.for_date_j = (SELECT for_date_j
+        AND (ev.ends_on IS NOT NULL AND sp.for_date_j = (SELECT for_date_j
                                                          FROM tt_dates_desc
-                                                         WHERE for_date_j <= ev.ends_on_j
-                                                               AND for_date_j > ev.starts_on_j
-                                                         LIMIT 1))
-          /*OR
-             (ev.ends_on IS NULL AND sp.for_date_j = (SELECT for_date_j
-                                                         FROM tt_dates_desc
-                                                         WHERE for_date_j <= ev.starts_on_j
-                                                               AND for_date_j > ev.starts_on_j - 14
-                                                         LIMIT 1))*/);
+                                                         WHERE
+                                                            for_date_j <= ev.ends_on_j
+                                                            AND for_date_j > ev.starts_on_j
+                                                            AND stock_entity_type_id = sp.stock_entity_type_id
+                                                            AND stock_entity_id = sp.stock_entity_id
+                                                         LIMIT 1));
+
+-- .mode csv
+-- .out tt_end_1.csv
+-- select * from tt_sp_end_1;
+-- .exit
 
 CREATE TEMP TABLE tt_sp_end_2 AS
   SELECT
@@ -124,34 +192,49 @@ CREATE TEMP TABLE tt_sp_end_2 AS
                                                          WHERE for_date_j <= ev.starts_on_j
                                                             AND for_date_j > ev.starts_on_j - 14
                                                          LIMIT 1));
-
-SELECT count(0) FROM tt_sp_before;
-SELECT count(0) FROM tt_sp_start;
+-- .mode csv
+-- .out sp_before.csv
+-- SELECT * FROM tt_sp_before;
+-- .out sp_start.csv
+-- SELECT * FROM tt_sp_start;
+-- .exit
+select count(0) from tt_sp_before;
+select count(0) from tt_sp_start;
 SELECT count(0) FROM tt_sp_end_1;
 SELECT count(0) FROM tt_sp_end_2;
 
-.exit
-
+.mode csv
+.out sp_all.csv
 SELECT
-  /*sp_before.stock_entity_id,
+  sp_before.stock_entity_id,
   sp_before.for_date,
   sp_before.close,
-  sp_start.for_date,
-  sp_start.close*/
   sp_start.stock_entity_id,
-  count(0)
-FROM tt_sp_before sp_before
-  INNER JOIN tt_sp_start sp_start
-  INNER JOIN tt_sp_end sp_end
-    ON
+  sp_start.for_date,
+  sp_start.close,
+  sp_end_1.stock_entity_id,
+  sp_end_1.for_date,
+  sp_end_1.close
+FROM tt_sp_start sp_start
+  LEFT OUTER JOIN tt_sp_before sp_before
+  ON
       sp_before.stock_entity_id = sp_start.stock_entity_id
       AND sp_before.event_id = sp_start.event_id
-      AND sp_end.stock_entity_id = sp_start.stock_entity_id
-      AND sp_end.event_id = sp_start.event_id
-GROUP BY sp_start.stock_entity_id
-ORDER BY count(0) DESC, sp_start.stock_entity_id DESC
-LIMIT 10;
+  LEFT OUTER JOIN tt_sp_end_1 sp_end_1
+    ON
+      sp_end_1.stock_entity_id = sp_start.stock_entity_id
+      and sp_end_1.event_id = sp_start.event_id
 
+--       AND (sp_end_1.stock_entity_id is not NULL and sp_end_1.stock_entity_id = sp_before.stock_entity_id)
+--       AND sp_end_1.event_id = sp_before.event_id
+--       AND sp_end.stock_entity_id = sp_start.stock_entity_id
+--       AND sp_end.event_id = sp_start.event_id
+-- GROUP BY sp_start.stock_entity_id
+ORDER BY sp_before.stock_entity_id, sp_start.stock_entity_id
+-- LIMIT 10
+;
+
+.exit
 
 /*
 SELECT
