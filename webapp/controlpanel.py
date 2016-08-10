@@ -71,7 +71,7 @@ class FintechAdminIndexView(AdminIndexView):
         self._template_args['form'] = form
         # self._template_args['link'] = link
         #return super(FintechAdminIndexView, self).index()
-        return self.render("admin/login.html")
+        return self.render("admin/login_1.html")
 
     @expose('/register/', methods=('GET', 'POST'))
     def register_view(self):
