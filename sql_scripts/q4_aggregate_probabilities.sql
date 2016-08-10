@@ -16,13 +16,10 @@ CREATE TEMP TABLE tt_dates_asc
 );
 
 -- EXPLAIN QUERY PLAN
---INSERT INTO tt_dates_desc
+INSERT INTO tt_dates_desc
   SELECT DISTINCT
-    ev.starts_on,
-    ev.ends_on,
-    sp.for_date
---     ,
---     sp.for_date_j
+    sp.for_date,
+    sp.for_date_j
   FROM stock_prices_jd sp
     INNER JOIN events_jd ev ON
                               ev.event_group_id = 4
@@ -31,9 +28,7 @@ CREATE TEMP TABLE tt_dates_asc
                               AND ((ev.ends_on IS NOT NULL AND sp.for_date < date(ev.ends_on, '7 days'))
                                    OR
                                    (ev.ends_on IS NULL AND sp.for_date < date(ev.starts_on, '7 days')))
-  ORDER BY for_date;-- DESC;
-
-.exit
+  ORDER BY for_date DESC;
 
 INSERT INTO tt_dates_asc
   SELECT
@@ -65,7 +60,7 @@ CREATE TEMP TABLE tt_sp_before AS
     INNER JOIN events_jd ev
       ON
         sp.stock_entity_type_id = 1
-        AND ev.event_group_id = 2
+        AND ev.event_group_id = 4
         AND sp.for_date_j = (SELECT for_date_j
                              FROM tt_dates_desc
                              WHERE for_date_j < ev.starts_on_j
@@ -83,15 +78,14 @@ CREATE TEMP TABLE tt_sp_start AS
     INNER JOIN events_jd ev
       ON
         sp.stock_entity_type_id = 1
-        AND ev.event_group_id = 2
+        AND ev.event_group_id = 4
         AND sp.for_date_j = (SELECT for_date_j
                              FROM tt_dates_desc
                              WHERE for_date_j <= ev.starts_on_j
                                    AND for_date_j > ev.starts_on_j - 14
                              LIMIT 1);
 
-/*
-CREATE TEMP TABLE tt_sp_end AS
+CREATE TEMP TABLE tt_sp_end_1 AS
   SELECT
     sp.stock_entity_id,
     ev.id event_id,
@@ -101,27 +95,42 @@ CREATE TEMP TABLE tt_sp_end AS
     INNER JOIN events_jd ev
       ON
         sp.stock_entity_type_id = 1
-        AND ev.event_group_id = 2
+        AND ev.event_group_id = 4
         AND ((ev.ends_on IS NOT NULL AND sp.for_date_j = (SELECT for_date_j
                                                          FROM tt_dates_desc
                                                          WHERE for_date_j <= ev.ends_on_j
                                                                AND for_date_j > ev.starts_on_j
                                                          LIMIT 1))
-          OR
+          /*OR
              (ev.ends_on IS NULL AND sp.for_date_j = (SELECT for_date_j
                                                          FROM tt_dates_desc
                                                          WHERE for_date_j <= ev.starts_on_j
                                                                AND for_date_j > ev.starts_on_j - 14
-                                                         LIMIT 1)));
-*/
+                                                         LIMIT 1))*/);
 
+CREATE TEMP TABLE tt_sp_end_2 AS
+  SELECT
+    sp.stock_entity_id,
+    ev.id event_id,
+    sp.for_date,
+    sp.close
+  FROM tt_stock_prices_jd sp
+    INNER JOIN events_jd ev
+      ON
+        sp.stock_entity_type_id = 1
+        AND ev.event_group_id = 4
+        AND (ev.ends_on IS NULL AND sp.for_date_j = (SELECT for_date_j
+                                                         FROM tt_dates_desc
+                                                         WHERE for_date_j <= ev.starts_on_j
+                                                            AND for_date_j > ev.starts_on_j - 14
+                                                         LIMIT 1));
 
-SELECT count(0)
-FROM tt_sp_before;
-SELECT count(0)
-FROM tt_sp_start;
-SELECT count(0)
-FROM tt_sp_end;
+SELECT count(0) FROM tt_sp_before;
+SELECT count(0) FROM tt_sp_start;
+SELECT count(0) FROM tt_sp_end_1;
+SELECT count(0) FROM tt_sp_end_2;
+
+.exit
 
 SELECT
   /*sp_before.stock_entity_id,
