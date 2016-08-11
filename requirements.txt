@@ -1,7 +1,6 @@
 Flask
 Flask-Admin
-Flask-SQLAlchemy
-from webapp import app, config
+
 
 ###############################
 ### Run the App             ###
@@ -13,7 +12,7 @@ if __name__ == "__main__":
 ### Git Test by Juzar           ###
 ###############################
 Flask-Login>=0.3.0
-WTForms
+Juzar
 APScheduler
 pymssql
 socket = fintech_webapp.sock
