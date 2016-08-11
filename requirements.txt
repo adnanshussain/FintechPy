@@ -1,7 +1,31 @@
 Flask
 Flask-Admin
 Flask-SQLAlchemy
+from webapp import app, config
+
+###############################
+### Run the App             ###
+###############################
+if __name__ == "__main__":
+    app.theapp.run(host=config.DevConfig.HOST)
+	
+	###########################
+### Git Test by Juzar           ###
+###############################
 Flask-Login>=0.3.0
 WTForms
 APScheduler
 pymssql
+socket = fintech_webapp.sock
+ +#socket = 127.0.0.1:3031
+ +#chown-socket=www-data:www-data
+ +#chmod-socket = 666
+ +
+ +vacuum = true
+ +
+ +die-on-term = true
+ +
+ +virtualenv = /usr/share/nginx/venv_1
+ +
+ +#http = 0.0.0.0:5000
+ +
