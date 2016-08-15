@@ -1,3 +1,5 @@
+# TDB = To Be Deleted
+
 import sqlite3, datetime
 from webapp import config
 

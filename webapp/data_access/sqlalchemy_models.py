@@ -1,4 +1,4 @@
-from webapp.app import db, config
+from webapp import db
 from flask_login import UserMixin
 from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, Boolean, ForeignKey, create_engine
 from sqlalchemy.orm import relationship, backref, sessionmaker
@@ -29,6 +29,14 @@ def short_name_ar_default(context):
 ###  Base classes for fields that are common across all tables ###
 ##################################################################
 class CommonModelBaseMixin:
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name_en = Column(String)
+    name_ar = Column(String)
+
+    def __str__(self):
+        return self.name_en
+
+class AuditModelBaseMixin:
     # @declared_attr
     # def __tablename__(cls):
     #     return cls.__name__.lower()
@@ -51,17 +59,14 @@ class CommonModelBaseMixin:
     modified_on = Column(DateTime, nullable=True)
 
 class StockModelBaseMixin:
-    id = Column(Integer, primary_key=True, autoincrement=True)
     argaam_id = Column(Integer, nullable=True)
-    name_en = Column(String)
-    name_ar = Column(String)
     short_name_en = Column(String, default=short_name_en_default)
     short_name_ar = Column(String, default=short_name_ar_default)
 
 ###############################
 ###  User Table             ###
 ###############################
-class User(UserMixin, CommonModelBaseMixin, db.Model):
+class User(UserMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -72,34 +77,33 @@ class User(UserMixin, CommonModelBaseMixin, db.Model):
 ###############################
 ###  Countries Table        ###
 ###############################
-class Country(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
+class Country(CommonModelBaseMixin, StockModelBaseMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "countries"
 
-    def __str__(self):
-        return self.name_en
 ###############################
 ###  Markets Table          ###
 ###############################
-class Market(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
+class Market(CommonModelBaseMixin, StockModelBaseMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "markets"
 
     symbol = Column(String)
     # FK to country
     country_id = Column(Integer, ForeignKey(Country.id), nullable=True)
     country = relationship(Country, backref="markets")
-   
-    def __str__(self):
-        return self.short_name_en
+
 ###############################
 ###  Sectors Table          ###
 ###############################
-class Sector(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
+class Sector(CommonModelBaseMixin, StockModelBaseMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "sectors"
+    # FK to country
+    market_id = Column(Integer, ForeignKey(Market.id), nullable=True)
+    market = relationship(Market, backref="sectors")
 
 ###############################
 ###  Companies Table        ###
 ###############################
-class Company(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
+class Company(CommonModelBaseMixin, StockModelBaseMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "companies"
 
     stock_symbol = Column(String)
@@ -107,13 +111,14 @@ class Company(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
     # FK to market
     market_id = Column(Integer, ForeignKey(Market.id))
     market = relationship(Market, backref="companies")
+    # FK to market
+    sector_id = Column(Integer, ForeignKey(Sector.id))
+    sector = relationship(Sector, backref="companies")
 
-    def __str__(self):
-        return self.short_name_en
 ###############################
 ###  Commodities Table      ###
 ###############################
-class Commodity(CommonModelBaseMixin, StockModelBaseMixin, db.Model):
+class Commodity(CommonModelBaseMixin, StockModelBaseMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "commodities"
 
 ###############################
@@ -141,59 +146,50 @@ class StockPrice(db.Model):
     def __str__(self):
         return "%s %s %s" % (self.id, self.for_date, self.close)
 
-
 ###############################
 ###  Event Categories Table ###
 ###############################
-class EventCategory(CommonModelBaseMixin, db.Model):
-    __tablename__ = "event_categories"
+# class EventCategory(AuditModelBaseMixin, db.Model):
+#     __tablename__ = "event_categories"
+#
+#     # note: Had to include these as it was giving some SQL Alchemy error when id was being derived from a base class
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     name_en = Column(String)
+#     name_ar = Column(String)
+#
+#     is_subcategory = Column(Boolean, default=False)
+#     parent_id = Column(Integer, ForeignKey(id), nullable=True)
+#     # create a 2 way self referencing relationship (need to understand this more)
+#     parent = relationship("EventCategory", remote_side=[id], backref = 'children') #, primaryjoin='EventCategory.is_subcategory==False')
+#
+#     def __str__(self):
+#         return self.name_en
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name_en = Column(String)
-    name_ar = Column(String)
-    is_subcategory = Column(Boolean, default=False)
-    parent_id = Column(Integer, ForeignKey(id), nullable=True)
-    # create a 2 way self referencing relationship (need to understand this more)
-    parent = relationship("EventCategory", remote_side=[id], backref = 'children') #, primaryjoin='EventCategory.is_subcategory==False')
-
-    def __str__(self):
-        return self.name_en
 
 ###############################
 ###  Event Groups Table ###
 ###############################
-class EventGroup(CommonModelBaseMixin, db.Model):
+class EventGroup(CommonModelBaseMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "event_groups"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name_en = Column(String)
-    name_ar = Column(String)
-
-    def __str__(self):
-        return self.name_en
+    event_type = Column(Integer, default=1)  # 1 = single day event, 2 = range date event
 
 ###############################
 ###  Events Table           ###
 ###############################
-class Event(CommonModelBaseMixin, db.Model):
+class Event(CommonModelBaseMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "events"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name_en = Column(String)
-    name_ar = Column(String)
     type = Column(Integer, default=1) # 1 = single day event, 2 = range date event
     starts_on = Column(Date)
     ends_on = Column(Date, nullable=True)
     # company_id = Column(Integer, nullable=True)
     company_id = Column(Integer, ForeignKey(Company.id))
     company = relationship(Company, backref="events")
-    event_category_id = Column(Integer, ForeignKey(EventCategory.id))
-    event_category = relationship(EventCategory, backref="events")
+    # event_category_id = Column(Integer, ForeignKey(EventCategory.id))
+    # event_category = relationship(EventCategory, backref="events")
     event_group_id = Column(Integer, ForeignKey(EventGroup.id), nullable=False)
     event_group = relationship(EventGroup, backref="events")
-    
-    def __str__(self):
-        return self.name_en
 
 ######################################
 ### Just some sample rows and code ###

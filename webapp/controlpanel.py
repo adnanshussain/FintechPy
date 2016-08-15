@@ -4,11 +4,11 @@ import flask_login
 from flask import redirect, url_for, flash, request, Markup
 from flask_admin import Admin, expose, helpers, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
-from webapp.data_access.sqlalchemy_models import User, EventGroup, EventCategory, Event, Country, Company, Market, \
+from webapp.data_access.sqlalchemy_models import User, EventGroup, Event, Country, Company, Market, \
     Sector, Commodity
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import form, fields, validators
-from .app import theapp, db
+from . import theapp, db
 
 
 # Define login form (for flask-login)
@@ -138,29 +138,31 @@ class EventGroupModelView(AdminModelView):
     form_columns = column_list = ['name_en', 'name_ar']
     list_template = 'admin/custom_listview_eventgroup.html'
 
-
-class EventCategoryModelView(AdminModelView):
-    can_view_details = True
-    form_excluded_columns = ['children', ]
-    form_columns = column_list = ['name_en', 'name_ar', 'is_subcategory', 'parent', 'created_on']
-    form_edit_rules = form_create_rules = ('parent', 'name_en', 'name_ar', 'is_subcategory')
-
-    def create_form(self):
-        return self._use_filtered_parent(
-            super(EventCategoryModelView, self).create_form()
-        )
-
-    def edit_form(self, obj):
-        return self._use_filtered_parent(
-            super(EventCategoryModelView, self).edit_form(obj)
-        )
-
-    def _use_filtered_parent(self, form):
-        form.parent.query_factory = self._get_parent_list
-        return form
-
-    def _get_parent_list(self):
-        return self.session.query(EventCategory).filter_by(is_subcategory=False).all()
+############################################
+### NOT NEEDED ANYMORE BUT DO NOT DELETE ###
+############################################
+# class EventCategoryModelView(AdminModelView):
+#     can_view_details = True
+#     form_excluded_columns = ['children', ]
+#     form_columns = column_list = ['name_en', 'name_ar', 'is_subcategory', 'parent', 'created_on']
+#     form_edit_rules = form_create_rules = ('parent', 'name_en', 'name_ar', 'is_subcategory')
+#
+#     def create_form(self):
+#         return self._use_filtered_parent(
+#             super(EventCategoryModelView, self).create_form()
+#         )
+#
+#     def edit_form(self, obj):
+#         return self._use_filtered_parent(
+#             super(EventCategoryModelView, self).edit_form(obj)
+#         )
+#
+#     def _use_filtered_parent(self, form):
+#         form.parent.query_factory = self._get_parent_list
+#         return form
+#
+#     def _get_parent_list(self):
+#         return self.session.query(EventCategory).filter_by(is_subcategory=False).all()
 
 
 class EventModelView(AdminModelView):

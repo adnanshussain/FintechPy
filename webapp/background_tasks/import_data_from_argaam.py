@@ -3,9 +3,9 @@ from datetime import datetime
 import os
 
 from sqlalchemy.sql import func, select
-from webapp.app import db
+from webapp import db
 from webapp.config import configs, ENVAR_FINTECH_CONFIG
-from webapp.data_access.sqlalchemy_models import Market, Sector, Company, Commodity, StockPrice
+from webapp.data_access.sqlalchemy_models import Country, Market, Sector, Company, Commodity, StockPrice
 
 def _get_mssql_connection(as_dict=False):
     config = configs[os.getenv(ENVAR_FINTECH_CONFIG)]
@@ -13,37 +13,64 @@ def _get_mssql_connection(as_dict=False):
                            config.ARGAAM_MSSQL_DB_PWD, config.ARGAAM_MSSQL_DB_NAME,
                            as_dict=as_dict)
 
-def fetch_and_add_markets():
+def fetch_and_add_countries():
     conn = _get_mssql_connection(True)
     cur = conn.cursor()
 
-    cur.execute(
-        "SELECT marketid, marketnameen, marketnamear, generalindexsymbol FROM markets WHERE IsActive = 1 AND IsTrading = 1 AND DisplayInPP = 1")
+    cur.execute("select countryid, countrynameen, countrynamear from Countries where CountryID in (143, 123, 119, 76, 109, 10);")
 
     for r in cur.fetchall():
-        argaam_market_id = r["marketid"]
+        argaam_country_id = r["countryid"]
 
-        if db.session.query(Market).filter(Market.argaam_id == argaam_market_id).count() == 0:
-            market = Market()
-            market.argaam_id = r["marketid"]
-            market.name_en = r["marketnameen"]
-            market.name_ar = r["marketnamear"]
-            market.symbol = r["generalindexsymbol"]
-            db.session.add(market)
+        if db.session.query(Country).filter(Country.argaam_id == argaam_country_id).count() == 0:
+            country = Country()
+            country.id = r["countryid"]
+            country.argaam_id = r["countryid"]
+            country.name_en = r["countrynameen"]
+            country.name_ar = r["countrynamear"]
+            country.created_by_id = -1
+            db.session.add(country)
+            print("Added country: {}".format(country))
 
     db.session.commit()
 
     cur.close()
     conn.close()
 
+def fetch_and_add_markets():
+    conn = _get_mssql_connection(True)
+    cur = conn.cursor()
+
+    cur.execute("SELECT countryid, marketid, marketnameen, marketnamear, generalindexsymbol FROM markets "
+                "WHERE IsActive = 1 AND IsTrading = 1 AND DisplayInPP = 1;")
+
+    for r in cur.fetchall():
+        argaam_market_id = r["marketid"]
+
+        if db.session.query(Market).filter(Market.argaam_id == argaam_market_id).count() == 0:
+            market = Market()
+            market.id = r["marketid"]
+            market.country_id = r["countryid"]
+            market.argaam_id = r["marketid"]
+            market.name_en = r["marketnameen"]
+            market.name_ar = r["marketnamear"]
+            market.symbol = r["generalindexsymbol"]
+            market.created_by_id = -1
+            db.session.add(market)
+            print("Added market: {}".format(market))
+
+    db.session.commit()
+
+    cur.close()
+    conn.close()
 
 def fetch_and_add_sectors():
     conn = _get_mssql_connection(True)
     cur = conn.cursor()
 
-    cur.execute("SELECT s.sectorid, s.sectornameen, s.sectornamear FROM MarketSectors ms\
+    cur.execute("SELECT s.sectorid, ms.marketid, s.sectornameen, s.sectornamear FROM MarketSectors ms\
                   INNER JOIN sectors s ON ms.SectorID = s.sectorid\
-                  WHERE ms.MarketID = 3 AND s.IsPublished = 1")
+                  WHERE ms.MarketID = 3 AND s.IsPublished = 1;")
 
     for r in cur.fetchall():
         argaam_sector_id = r["sectorid"]
@@ -51,31 +78,35 @@ def fetch_and_add_sectors():
         if db.session.query(Sector).filter(Sector.argaam_id == argaam_sector_id).count() == 0:
             sector = Sector()
             sector.argaam_id = r["sectorid"]
+            sector.market_id = r["marketid"]
             sector.name_en = r["sectornameen"]
             sector.name_ar = r["sectornamear"]
+            sector.created_by_id = -1
             db.session.add(sector)
+            print("Added sector: {}".format(sector))
 
     db.session.commit()
 
     cur.close()
     conn.close()
 
-
 def fetch_and_add_companies():
     conn = _get_mssql_connection(True)
     cur = conn.cursor()
 
-    cur.execute("""SELECT msc.marketid, msc.companyid, msc.companynameen, msc.companynamear, msc.shortnameen, msc.shortnamear,
+    cur.execute("""SELECT msc.marketid, msc.sectorid, msc.companyid, msc.companynameen, msc.companynamear, msc.shortnameen, msc.shortnamear,
                 c.stocksymbol, c.logourl
                 FROM pub.MarketSectorCompanies msc
                 INNER JOIN dbo.Companies c ON c.CompanyID = msc.CompanyID
-                WHERE msc.MarketStatusID = 3 AND msc.marketid = 3 AND msc.RecordStatus = 1 AND msc.IsActive = 1 AND msc.IsSuspended = 0""")
+                WHERE msc.MarketStatusID = 3 AND msc.marketid = 3 AND msc.RecordStatus = 1 AND msc.IsActive = 1 AND msc.IsSuspended = 0;""")
 
     for r in cur.fetchall():
         argaam_company_id = r["companyid"]
+        argaam_sector_id = r["sectorid"]
 
         if db.session.query(Company).filter(Company.argaam_id == argaam_company_id).count() == 0:
             company = Company()
+            company.sector_id = db.session.query(Sector.id).filter(Sector.argaam_id == argaam_sector_id).scalar()
             company.argaam_id = r["companyid"]
             company.name_en = r["companynameen"]
             company.name_ar = r["companynamear"]
@@ -84,13 +115,14 @@ def fetch_and_add_companies():
             company.market_id = db.session.query(Market).filter(Market.argaam_id == r["marketid"]).one().id
             company.stock_symbol = r["stocksymbol"]
             company.logo_url = r["logourl"]
+            company.created_by_id = -1
             db.session.add(company)
+            print("Added company: {}".format(company))
 
     db.session.commit()
 
     cur.close()
     conn.close()
-
 
 def fetch_and_add_commodities():
     conn = _get_mssql_connection(True)
@@ -106,13 +138,14 @@ def fetch_and_add_commodities():
             commodity.argaam_id = argaam_commodity_id
             commodity.name_en = r["commoditynameen"]
             commodity.name_ar = r["commoditynamear"]
+            commodity.created_by_id = -1
             db.session.add(commodity)
+            print("Added commodity: {}".format(commodity))
 
     db.session.commit()
 
     cur.close()
     conn.close()
-
 
 def fetch_and_add_commodity_prices():
     conn = _get_mssql_connection()
@@ -121,14 +154,16 @@ def fetch_and_add_commodity_prices():
     # get all commodities registered with fintech db, along with their last (most recent) archive date
     subquery = select(
         [StockPrice.stock_entity_id, StockPrice.stock_entity_argaam_id, func.max(StockPrice.for_date).label('for_date'),
-         StockPrice.close]) \
-        .where(StockPrice.stock_entity_type_id == 2) \
+         StockPrice.close])\
+        .where(StockPrice.stock_entity_type_id == 2)\
         .group_by(StockPrice.stock_entity_id).alias("sp")
 
     # http://techspot.zzzeek.org/2011/01/14/the-enum-recipe/
-    commodities_with_last_entry = db.session.query(Commodity.id, Commodity.argaam_id, subquery.c.for_date,
-                                                   subquery.c.close) \
-        .outerjoin(subquery, Commodity.id == subquery.c.stock_entity_id).all()
+    commodities_with_last_entry_query = db.session.query(Commodity.id, Commodity.argaam_id, subquery.c.for_date,
+                                                   subquery.c.close)\
+        .outerjoin(subquery, Commodity.id == subquery.c.stock_entity_id)
+
+    commodities_with_last_entry = commodities_with_last_entry_query.all()
 
     # foreach commodity get the stock price archive from Argaam DB
     for index, (commodity_id, argaam_id, last_entry, close) in enumerate(commodities_with_last_entry):
@@ -183,7 +218,6 @@ def fetch_and_add_commodity_prices():
 
     cur.close()
     conn.close()
-
 
 def fetch_and_add_company_prices():
     conn = _get_mssql_connection()
@@ -253,7 +287,6 @@ def fetch_and_add_company_prices():
     cur.close()
     conn.close()
 
-
 def fetch_and_add_market_prices():
     conn = _get_mssql_connection()
     cur = conn.cursor()
@@ -322,7 +355,6 @@ def fetch_and_add_market_prices():
 
     cur.close()
     conn.close()
-
 
 def fetch_and_add_sector_prices():
     conn = _get_mssql_connection()
@@ -398,11 +430,12 @@ def fetch_and_add_sector_prices():
 
 print(__name__, ' got executed')
 
+fetch_and_add_countries()
 fetch_and_add_markets()
 fetch_and_add_sectors()
 fetch_and_add_companies()
 fetch_and_add_commodities()
-
+#
 fetch_and_add_sector_prices()
 fetch_and_add_market_prices()
 fetch_and_add_company_prices()
