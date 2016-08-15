@@ -147,8 +147,31 @@ class UserModelView(AdminModelView):
 
 
 class EventGroupModelView(AdminModelView):
-    form_columns = column_list = ['name_en', 'name_ar']
+    form_columns = ['event_type','name_en', 'name_ar']
+    column_list = ['name_en', 'name_ar','event_type']
     list_template = 'admin/custom_listview_eventgroup.html'
+
+    def formatEventType(view, context, model, name):
+        typesDict = {1: 'Single day event', 2: 'Range date event'}
+        return Markup('{}'.format(typesDict[model.event_type]))
+
+    column_formatters = {
+        'event_type': formatEventType
+    }
+
+    form_overrides = dict(
+        event_type=fields.SelectField
+    )
+
+    form_args = dict(
+        event_type=dict(
+            choices=[
+                ('1', 'Single day event'),
+                ('2', 'Range date event')
+            ]
+        ),
+    )
+
 
 ############################################
 ### NOT NEEDED ANYMORE BUT DO NOT DELETE ###
