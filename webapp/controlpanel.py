@@ -201,34 +201,17 @@ class EventGroupModelView(AdminModelView):
 
 
 class EventModelView(AdminModelView):
-    form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'event_group', 'company']
+    form_columns = column_list = ['name_en', 'name_ar', 'starts_on', 'ends_on', 'event_group', 'company']
     form_edit_rules = form_create_rules = (
-    'event_group', 'name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company')
+    'event_group', 'name_en', 'name_ar', 'starts_on', 'ends_on', 'company')
 
     column_filters = (
-    'event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
+    'event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'name_en', 'name_ar')
 
-    def formatEventType(view, context, model, name):
-        typesDict = {1: 'Single day event', 2: 'Range date event'}
-        return Markup('{}'.format(typesDict[model.type]))
-
-    column_formatters = {
-        'type': formatEventType
-    }
 
     form_overrides = dict(
-        type=fields.SelectField,
         starts_on=fields.DateField,
         ends_on=fields.DateField
-    )
-
-    form_args = dict(
-        type=dict(
-            choices=[
-                ('1', 'Single day event'),
-                ('2', 'Range date event')
-            ]
-        ),
     )
 
     def on_model_change(self, form, model, is_created):
