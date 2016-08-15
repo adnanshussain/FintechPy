@@ -10,6 +10,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import form, fields, validators
 from . import theapp, db
 
+from webapp.data_access.sqlalchemy_models import User
+
+###############################
+### Initialize flask-login  ###
+###############################
+login_manager = flask_login.LoginManager()
+login_manager.init_app(theapp)
+
+# Create user loader function
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.query(User).get(user_id)
 
 # Define login form (for flask-login)
 class LoginForm(form.Form):
