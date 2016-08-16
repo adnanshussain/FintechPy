@@ -13,15 +13,13 @@
 </div>
 
 
- <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 
 {% endif %}
 
 {% endblock %}
 {% block tail %}
-    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css" />-->
-    <!--<script src="{{ url_for('static', filename='js/moment.min.js') }}" type="text/javascript"></script>--
-    <!--<script src="{{ url_for('static', filename='js/bootstrap-datetimepicker.min.js') }}" type="text/javascript"></script>-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/locale/af.js" type="text/javascript"></script>
 
@@ -45,42 +43,34 @@
                $('#event_group option[value="'+event_group_id+'"]').prop('selected', true); //Set Selected value of event_group Dropdown.
                var set_text_to_span=$('#event_group option:selected').text();  //get selected value text.
                $("#select2-chosen-1").html(set_text_to_span);   //set selected value text in span tags.
-               //$("#ends_on").attr("disabled", "disabled");
-
-
-               //selected index change.
-               $('#event_group').change(function() {
-                 alert('work');
-               });
             });
         });
+        $(function () {
+            $('#starts_on').datetimepicker(
+                    {
+                        format:'YYYY-MM-DD'
+                    }
+            );
+            $('#ends_on').datetimepicker( {
+                        format:'YYYY-MM-DD'
+                    });
+        });
+          $('#starts_on').keypress(function (e) {
+              if ((e.keyCode >= 48 && e.keyCode <= 57)) {
 
-        <!--$(function () {-->
-            <!--$('#starts_on').datetimepicker(-->
-                    <!--{-->
-                        <!--format:'YYYY-MM-DD'-->
-                    <!--}-->
-            <!--);-->
-            <!--$('#ends_on').datetimepicker( {-->
-                        <!--format:'YYYY-MM-DD'-->
-                    <!--});-->
-        <!--});-->
-          <!--$('#starts_on').keypress(function (e) {-->
-              <!--if ((e.keyCode >= 48 && e.keyCode <= 57)) {-->
+              }else{
+                  e.preventDefault();
+              }
+          });
 
-              <!--}else{-->
-                  <!--e.preventDefault();-->
-              <!--}-->
-          <!--});-->
+          $('#ends_on').keypress(function (e) {
+              if ((e.keyCode >= 48 && e.keyCode <= 57)) {
 
-          <!--$('#ends_on').keypress(function (e) {-->
-              <!--if ((e.keyCode >= 48 && e.keyCode <= 57)) {-->
-
-              <!--}else{-->
-                  <!--e.preventDefault();-->
-              <!--}-->
-          <!--});-->
-
-    </script>
+              }else{
+                  e.preventDefault();
+              }
+          });
+  </script>
 
 {% endblock %}
+

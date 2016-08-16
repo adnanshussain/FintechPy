@@ -206,6 +206,10 @@ class EventModelView(AdminModelView):
 
     column_filters = ('event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
 
+    form_overrides = dict(
+        starts_on=fields.DateField,
+        ends_on=fields.DateField
+    )
     form_widget_args = {
         'ends_on': {
              'disabled': False
