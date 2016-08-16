@@ -9,7 +9,7 @@ from webapp.data_access.sqlalchemy_models import User, EventGroup, Event, Countr
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import form, fields, validators
 from . import theapp, db
-
+from flask_admin.model import typefmt
 from webapp.data_access.sqlalchemy_models import User
 
 ###############################
@@ -199,42 +199,33 @@ class EventGroupModelView(AdminModelView):
 #     def _get_parent_list(self):
 #         return self.session.query(EventCategory).filter_by(is_subcategory=False).all()
 
-
 class EventModelView(AdminModelView):
     form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'event_group', 'company']
-    form_edit_rules = form_create_rules = (
-    'event_group', 'name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'company')
+    form_edit_rules = ('event_group', 'name_en', 'name_ar', 'type', 'starts_on', 'ends_on','company')
+    form_create_rules = ('event_group', 'name_en', 'name_ar','starts_on', 'ends_on', 'company')
 
-    column_filters = (
-    'event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
+    column_filters = ('event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
 
-    def formatEventType(view, context, model, name):
-        typesDict = {1: 'Single day event', 2: 'Range date event'}
-        return Markup('{}'.format(typesDict[model.type]))
-
-    column_formatters = {
-        'type': formatEventType
+    form_widget_args = {
+        'ends_on': {
+             'disabled': False
+        }
     }
 
-    form_overrides = dict(
-        type=fields.SelectField,
-        starts_on=fields.DateField,
-        ends_on=fields.DateField
-    )
+    form_edit_rules
 
-    form_args = dict(
-        type=dict(
-            choices=[
-                ('1', 'Single day event'),
-                ('2', 'Range date event')
-            ]
-        ),
-    )
+    # Will Override Default Behavior and Print Null Over Empty.
+    MY_DEFAULT_FORMATTERS = dict(typefmt.BASE_FORMATTERS)
+    MY_DEFAULT_FORMATTERS.update({
+        type(None): typefmt.null_formatter
+    })
+    column_type_formatters = MY_DEFAULT_FORMATTERS
 
     def on_model_change(self, form, model, is_created):
         super(EventModelView, self).on_model_change(form, model, is_created)
         if model.company_id == '':
             model.company_id = None
+        model.type = model.event_group.event_type  # Set Type value from selected dropdown of EventGroup type.
 
 
 class MetaDataAdminModelView(AdminModelView):
