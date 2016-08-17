@@ -17,5 +17,6 @@ env/
 FintechPy.pyproj
 FintechPy.sln
 *.tar
-
-
+webapp/static/js/bootstrap-datetimepicker.min.js
+webapp/static/js/bootstrap.min.js
+webapp/static/js/moment.min.js

@@ -1,1 +1,1 @@
-create index idx_stock_prices_dt_seid_setid on stock_prices (for_date, stock_entity_id, stock_entity_type_id);
+create index idx_sp_dt_setid on stock_prices (for_date, stock_entity_type_id);
