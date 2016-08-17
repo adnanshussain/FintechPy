@@ -43,7 +43,7 @@
         $('#event_group option[value="'+event_group_id+'"]').prop('selected', true); //Set Selected value of event_group Dropdown.
         var set_text_to_span=$('#event_group option:selected').text(); //get selected value text.
         $("#select2-chosen-1").html(set_text_to_span); //set selected value text in span tags.
-
+        eventCommonFunction(event_group_id);
 
         //$("#ends_on").attr("disabled", "disabled");
 
@@ -57,28 +57,34 @@
             var n = abc.indexOf("&name_en");
             var ev_id = abc.substring(i+1, n)
 
+            eventCommonFunction($("#event_group").val());
 
+                });
+            });
+        });
+
+        function  eventCommonFunction(value) {
             $.ajax({
                     cache: false,
                     type: "GET",
                     dataType: 'html',
                     url: "/admin/event/getType",
-                    data:{event_group: $("#event_group").val()} ,
+                    data:{event_group: value } ,
                     success: function (data) {
 {#                        alert(data);#}
-                        if(data == 1)
-                            $("#ends_on").attr('disabled','disabled');
+                        if(data == 1) {
+                            $("#ends_on").attr('disabled', 'disabled');
+                            $("#ends_on").val('');
+                        }
                         else
                             if($("#ends_on").is(":disabled"))
                                 $('#ends_on').removeAttr("disabled")
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
-                        alert('Failed to Update Model');
+{#                        alert('Failed to Update Model');#}
                     }
                     });
-                });
-            });
-        });
+        }
         $(function () {
             $('#starts_on').datetimepicker(
                     {
