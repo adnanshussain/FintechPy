@@ -209,14 +209,15 @@ class EventModelView(AdminModelView):
     form_overrides = dict(
         starts_on=fields.DateField,
         ends_on=fields.DateField
-    )
-    form_widget_args = {
-        'ends_on': {
-             'disabled': False
-        }
-    }
 
-    form_edit_rules
+    )
+
+    @expose('/getType', methods=["GET", "POST"])
+    def getType(self):
+        ev_id =request.args.get('event_group')
+        data = db.session.query(EventGroup.event_type).filter_by(id=ev_id).first()
+        value = data.event_type
+        return str(value)
 
     # Will Override Default Behavior and Print Null Over Empty.
     MY_DEFAULT_FORMATTERS = dict(typefmt.BASE_FORMATTERS)
@@ -230,6 +231,7 @@ class EventModelView(AdminModelView):
         if model.company_id == '':
             model.company_id = None
         model.type = model.event_group.event_type  # Set Type value from selected dropdown of EventGroup type.
+
 
 
 class MetaDataAdminModelView(AdminModelView):
