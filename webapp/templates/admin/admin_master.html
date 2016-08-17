@@ -38,6 +38,7 @@
         }
 
         $(document).ready(function(){
+            eventCommonFunction($("#event_group").val());
         $( "#event_group" ).ready(function() {
         var event_group_id = getParameterByName('event_group'); //get event_group id from query string.
         $('#event_group option[value="'+event_group_id+'"]').prop('selected', true); //Set Selected value of event_group Dropdown.
