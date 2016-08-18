@@ -212,6 +212,15 @@ class EventModelView(AdminModelView):
 
     )
 
+    def formatEventType(view, context, model, name):
+        typesDict = {1: 'Single day event', 2: 'Range date event'}
+        return Markup('{}'.format(typesDict[model.type]))
+
+    column_formatters = {
+        'type': formatEventType
+    }
+
+    # For ajax call located in admin_master.html purpose to Enable or Disable Ends_On Field.
     @expose('/getType', methods=["GET", "POST"])
     def getType(self):
         ev_id =request.args.get('event_group')
@@ -226,6 +235,7 @@ class EventModelView(AdminModelView):
     })
     column_type_formatters = MY_DEFAULT_FORMATTERS
 
+    # Call When Model Change.
     def on_model_change(self, form, model, is_created):
         super(EventModelView, self).on_model_change(form, model, is_created)
         if model.company_id == '':
