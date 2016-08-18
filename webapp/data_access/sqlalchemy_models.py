@@ -171,7 +171,6 @@ class StockPrice(db.Model):
 ###############################
 class EventGroup(CommonModelBaseMixin, AuditModelBaseMixin, db.Model):
     __tablename__ = "event_groups"
-
     event_type = Column(Integer, default=1)  # 1 = single day event, 2 = range date event
 
 ###############################

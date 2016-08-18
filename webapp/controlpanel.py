@@ -148,7 +148,9 @@ class UserModelView(AdminModelView):
 
 class EventGroupModelView(AdminModelView):
     form_columns = ['event_type','name_en', 'name_ar']
-    column_list = ['name_en', 'name_ar','event_type']
+    column_list = ['name_en','name_ar','event_type']
+
+
     list_template = 'admin/custom_listview_eventgroup.html'
 
     def formatEventType(view, context, model, name):
@@ -158,6 +160,14 @@ class EventGroupModelView(AdminModelView):
     column_formatters = {
         'event_type': formatEventType
     }
+
+    # For Edit Event_Group ajax call to check whether the EventGoup Contain Events or Not.
+    @expose('/chkcontainevents', methods=["GET"])
+    def chkcontainevents(self):
+        ev_id = request.args.get('event_group_id')
+        data = db.session.query(Event).filter_by(event_group_id=ev_id).count()
+        return str(data)
+
 
     form_overrides = dict(
         event_type=fields.SelectField
@@ -171,7 +181,6 @@ class EventGroupModelView(AdminModelView):
             ]
         ),
     )
-
 
 ############################################
 ### NOT NEEDED ANYMORE BUT DO NOT DELETE ###
@@ -201,8 +210,7 @@ class EventGroupModelView(AdminModelView):
 
 class EventModelView(AdminModelView):
     form_columns = column_list = ['name_en', 'name_ar', 'type', 'starts_on', 'ends_on', 'event_group', 'company']
-    form_edit_rules = ('event_group', 'name_en', 'name_ar', 'type', 'starts_on', 'ends_on','company')
-    form_create_rules = ('event_group', 'name_en', 'name_ar','starts_on', 'ends_on', 'company')
+    form_edit_rules = form_create_rules = ('event_group', 'name_en', 'name_ar','starts_on', 'ends_on', 'company')
 
     column_filters = ('event_group.name_en', 'company.short_name_en', 'starts_on', 'ends_on', 'type', 'name_en', 'name_ar')
 
