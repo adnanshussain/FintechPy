@@ -168,45 +168,60 @@ def what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_
     conn = _get_open_db_connection(use_row_factory=False, register_udfs=True)
 
     sql = """
-            select sp1.stock_entity_id, e.name_en, e.name_ar, e.short_name_en, e.short_name_ar,
-			      sp2.for_date, sp2.close, cp(sp2.close, sp1.close),
-			      sp1.for_date, sp1.close, cp(sp1.close, sp3.close),
-			      sp3.for_date, sp3.close
-            from stock_prices as sp1
-            inner join stock_prices as sp2
-            inner join stock_prices sp3
-            inner join {entity} e on
-                sp1.stock_entity_type_id = :setid
-                --and sp1.stock_entity_id IN (SELECT id from companies LIMIT 10)
-                {seid}
-                and sp1.for_date > date(:doe, '-1 months')
-                and sp1.for_date < date(:doe, '1 months')
+            SELECT
+              sp1.stock_entity_id,
+              e.name_en,
+              e.name_ar,
+              e.short_name_en,
+              e.short_name_ar,
+              sp2.for_date,
+              sp2.close,
+              cp(sp2.close, sp1.close),
+              sp1.for_date,
+              sp1.close,
+              cp(sp1.close, sp3.close),
+              sp3.for_date,
+              sp3.close
+            FROM stock_prices AS sp1
+              INNER JOIN stock_prices AS sp2
+              INNER JOIN stock_prices sp3
+              INNER JOIN {entity} e ON
+                                       sp1.stock_entity_type_id = 1
+                                       {seid}
+                                       AND sp1.for_date > date(:doe, '-1 months')
+                                       AND sp1.for_date <= :doe
+                                       AND sp2.for_date > date(:doe, '-1 months')
+                                       AND sp2.for_date < :doe
+                                       AND sp3.for_date > :doe
+                                       AND sp3.for_date <= date(:doe, '1 months')
 
-                and sp1.stock_entity_type_id = sp2.stock_entity_type_id
-                and sp1.stock_entity_id = sp2.stock_entity_id
-                and sp1.stock_entity_type_id = sp3.stock_entity_type_id
-                and sp1.stock_entity_id = sp3.stock_entity_id
+                                       AND sp2.stock_entity_type_id = sp1.stock_entity_type_id
+                                       AND sp2.stock_entity_id = sp1.stock_entity_id
+                                       AND sp3.stock_entity_type_id = sp1.stock_entity_type_id
+                                       AND sp3.stock_entity_id = sp1.stock_entity_id
 
-                and sp1.for_date = (select for_date from stock_prices
-                                        where for_date > date(:doe, '-1 months')
-                                        and for_date <= :doe
-                                        and stock_entity_id = sp1.stock_entity_id
-                                        and stock_entity_type_id = sp1.stock_entity_type_id
-                                        ORDER BY for_date DESC LIMIT 1)
-                and sp2.for_date = (select for_date from stock_prices
-                                        where for_date > date(:doe, '-1 months')
-                                        and	for_date < sp1.for_date
-                                        and stock_entity_id = sp1.stock_entity_id
-                                        and stock_entity_type_id = sp1.stock_entity_type_id
-                                        order by for_date desc limit 1 offset :days_before)
-                and sp3.for_date = (select for_date from stock_prices
-                                        where for_date < date(:doe, '1 months')
-                                        and for_date > sp1.for_date
-                                        and stock_entity_id = sp1.stock_entity_id
-                                        and stock_entity_type_id = sp1.stock_entity_type_id
-                                        order by for_date asc limit 1 offset :days_after)
-
-	            and sp1.stock_entity_id = e.id;
+                                       AND sp1.for_date = (SELECT for_date
+                                                           FROM stock_prices INDEXED BY idx_sp_dt_desc_setid_asc
+                                                           WHERE for_date > date(:doe, '-1 months')
+                                                                 AND for_date <= :doe
+                                                                 AND stock_entity_id = sp1.stock_entity_id
+                                                                 AND stock_entity_type_id = sp1.stock_entity_type_id
+                                                           LIMIT 1)
+                                       AND sp2.for_date = (SELECT for_date
+                                                           FROM stock_prices INDEXED BY idx_sp_dt_desc_setid_asc
+                                                           WHERE for_date > date(:doe, '-1 months')
+                                                                 AND for_date < :doe
+                                                                 AND stock_entity_id = sp1.stock_entity_id
+                                                                 AND stock_entity_type_id = sp1.stock_entity_type_id
+                                                           LIMIT 1 OFFSET :days_before)
+                                       AND sp3.for_date = (SELECT for_date
+                                                           FROM stock_prices INDEXED BY idx_sp_dt_asc_setid_asc
+                                                           WHERE for_date < date(:doe, '1 months')
+                                                                 AND for_date > :doe
+                                                                 AND stock_entity_id = sp1.stock_entity_id
+                                                                 AND stock_entity_type_id = sp1.stock_entity_type_id
+                                                           LIMIT 1 OFFSET :days_after)
+                                       AND sp1.stock_entity_id = e.id;
            """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id], seid='' if se_id is None else 'and sp1.stock_entity_id = :seid')
 
     params = { "setid":set_id, "doe": date_of_event, "days_before":days_before-1, "days_after": days_after-1}
@@ -221,103 +236,338 @@ def what_was_the_performance_of_stock_entities_n_days_before_and_after_a_single_
 
     return result
 
-def what_is_the_effect_of_event_group_on_stock_entities(set_id, eg_id, days_before, days_after):
+
+def get_q4_probabilities_prerequisite_sql(set_id, se_id, event_group_id, days_before, days_after):
+    sql = """
+        CREATE TEMP TABLE tt_sp AS
+          SELECT
+            ev.id event_id,
+            ev.starts_on,
+            ev.ends_on,
+            sp.stock_entity_id,
+            sp.for_date,
+            sp.close
+          FROM events ev
+            INNER JOIN stock_prices sp
+              ON
+                ev.event_group_id = :event_group_id
+                AND sp.stock_entity_type_id = :set_id
+                --AND sp.stock_entity_id in (46)
+                {seid}
+                AND sp.for_date > date(ev.starts_on, '-1 months')
+                AND ((ev.ends_on IS NULL AND sp.for_date < date(ev.starts_on, '1 months'))
+                     OR (ev.ends_on IS NOT NULL AND sp.for_date < date(ev.ends_on, '1 months')));
+
+        create index tt_idx_sp_dt_desc_seid on tt_sp (for_date DESC, stock_entity_id);
+        create index tt_idx_sp_dt_asc_seid on tt_sp (for_date ASC, stock_entity_id);
+
+        create TEMP TABLE tt_sp_before_ev AS
+          SELECT
+            ev.id event_id,
+            ev.type,
+            ev.starts_on,
+            ev.ends_on,
+            sp.stock_entity_id,
+            sp.for_date,
+            sp.close
+          FROM events ev
+            INNER JOIN tt_sp sp
+              ON
+                ev.id = sp.event_id
+                AND sp.for_date > date(ev.starts_on, '-1 months')
+                AND sp.for_date < ev.starts_on
+                AND sp.for_date = (SELECT for_date
+                                          FROM tt_sp INDEXED BY tt_idx_sp_dt_desc_seid
+                                          WHERE stock_entity_id = sp.stock_entity_id
+                                                AND for_date > date(ev.starts_on, '-1 months')
+                                                AND for_date < ev.starts_on
+                                          LIMIT 1 OFFSET :days_before);
+
+        create TEMP TABLE tt_sp_ev_start AS
+          SELECT
+            ev.id event_id,
+            ev.type type,
+            ev.starts_on starts_on,
+            ev.ends_on ends_on,
+            sp.stock_entity_id stock_entity_id,
+            max(sp.for_date) for_date,
+            sp.close close
+          FROM events ev
+            INNER JOIN tt_sp sp INDEXED BY tt_idx_sp_dt_desc_seid
+              ON
+                ev.id = sp.event_id
+                and sp.for_date > date(ev.starts_on, '-1 months')
+                AND sp.for_date <= ev.starts_on
+          GROUP BY ev.id, ev.type, ev.starts_on, ev.ends_on, sp.stock_entity_id;
+
+        create TEMP TABLE tt_sp_ev_end AS
+          SELECT
+            ev.id event_id,
+            ev.type type,
+            ev.starts_on starts_on,
+            ev.ends_on ends_on,
+            sp.stock_entity_id stock_entity_id,
+            max(sp.for_date) for_date,
+            sp.close close
+          FROM events ev
+            INNER JOIN tt_sp sp INDEXED BY tt_idx_sp_dt_desc_seid
+              ON
+                ev.id = sp.event_id
+                AND
+                ((ev.ends_on IS NULL AND sp.for_date > date(ev.starts_on, '-1 months') AND sp.for_date <= ev.starts_on)
+                 OR
+                 (ev.ends_on IS NOT NULL AND sp.for_date > ev.starts_on AND sp.for_date <= ev.ends_on))
+          GROUP BY ev.id, ev.type, ev.starts_on, ev.ends_on, sp.stock_entity_id;
+
+        create TEMP TABLE tt_sp_after_ev AS
+          SELECT
+            ev.id event_id,
+            ev.type,
+            ev.starts_on,
+            ev.ends_on,
+            sp.stock_entity_id,
+            sp.for_date,
+            sp.close
+          FROM events ev
+            INNER JOIN tt_sp sp
+              ON
+                ev.id = sp.event_id
+                AND
+                ((ev.ends_on IS NULL AND sp.for_date > ev.starts_on AND sp.for_date < date(ev.starts_on, '1 months'))
+                  OR (ev.ends_on IS NOT NULL AND sp.for_date > ev.ends_on AND sp.for_date < date(ev.ends_on, '1 months')))
+                 AND sp.for_date =
+                     (SELECT sp_inner.for_date
+                      FROM tt_sp sp_inner INDEXED BY tt_idx_sp_dt_asc_seid
+                      WHERE
+                            sp_inner.stock_entity_id = sp.stock_entity_id
+                            AND
+                            ((ev.ends_on IS NULL AND sp_inner.for_date > ev.starts_on AND sp_inner.for_date < date(ev.starts_on, '1 months'))
+                            OR
+                             (ev.ends_on IS NOT NULL AND sp_inner.for_date > ev.ends_on AND sp_inner.for_date < date(ev.ends_on, '1 months')))
+                      LIMIT 1 OFFSET :days_after);
+        """
+
+    return sql
+
+def what_is_the_effect_of_event_group_on_stock_entities(set_id, event_group_id, days_before, days_after):
     conn = _get_open_db_connection(use_row_factory=False, register_udfs=True)
 
+    date_margin_of_error_back = '-14 days'
+    date_margin_of_error_forward = '14 days'
+
+    sql_pre_req = """
+                    CREATE TEMP TABLE tt_sp AS
+                      SELECT
+                        ev.id event_id,
+                        ev.starts_on,
+                        ev.ends_on,
+                        sp.stock_entity_id,
+                        sp.for_date,
+                        sp.close
+                      FROM events ev
+                        INNER JOIN stock_prices sp
+                          ON
+                            ev.event_group_id = :egid
+                            AND sp.stock_entity_type_id = :setid
+                            --AND sp.stock_entity_id = 46
+                            AND sp.for_date > date(ev.starts_on, :dmoeb)
+                            AND ((ev.ends_on IS NULL AND sp.for_date < date(ev.starts_on, :dmoef))
+                                 OR (ev.ends_on IS NOT NULL AND sp.for_date < date(ev.ends_on, :dmoef)));
+           """
+    params = {"setid": set_id, "egid": event_group_id, "dmoeb": date_margin_of_error_back, "dmoef": date_margin_of_error_forward}
+    conn.execute(sql_pre_req, params)
+
+    sql_pre_req = "create index tt_idx_sp_dt_desc_seid on tt_sp (for_date DESC, stock_entity_id);"
+    conn.execute(sql_pre_req)
+
+    sql_pre_req = "create index tt_idx_sp_dt_asc_seid on tt_sp (for_date ASC, stock_entity_id);"
+    conn.execute(sql_pre_req)
+
+    sql_pre_req = """
+                    create TEMP TABLE tt_sp_before_ev AS
+                      SELECT
+                        ev.id event_id,
+                        ev.type,
+                        ev.starts_on,
+                        ev.ends_on,
+                        sp.stock_entity_id,
+                        sp.for_date,
+                        sp.close
+                      FROM events ev
+                        INNER JOIN tt_sp sp
+                          ON
+                            ev.id = sp.event_id
+                            AND sp.for_date > date(ev.starts_on, :dmoeb)
+                            AND sp.for_date < ev.starts_on
+                            AND sp.for_date = (SELECT for_date
+                                                      FROM tt_sp INDEXED BY tt_idx_sp_dt_desc_seid
+                                                      WHERE stock_entity_id = sp.stock_entity_id
+                                                            AND for_date > date(ev.starts_on, :dmoeb)
+                                                            AND for_date < ev.starts_on
+                                                      LIMIT 1 OFFSET :days_before);
+                """
+    params = {"dmoeb": date_margin_of_error_back, "dmoef": date_margin_of_error_forward, "days_before": days_before}
+    conn.execute(sql_pre_req, params)
+
+    sql_pre_req = """
+                    create TEMP TABLE tt_sp_ev_start AS
+                      SELECT
+                        ev.id event_id,
+                        ev.type type,
+                        ev.starts_on starts_on,
+                        ev.ends_on ends_on,
+                        sp.stock_entity_id stock_entity_id,
+                        max(sp.for_date) for_date,
+                        sp.close close
+                      FROM events ev
+                        INNER JOIN tt_sp sp INDEXED BY tt_idx_sp_dt_desc_seid
+                          ON
+                            ev.id = sp.event_id
+                            and sp.for_date > date(ev.starts_on, :dmoeb)
+                            AND sp.for_date <= ev.starts_on
+                      GROUP BY ev.id, ev.type, ev.starts_on, ev.ends_on, sp.stock_entity_id;
+                  """
+    params = {"dmoeb": date_margin_of_error_back}
+    conn.execute(sql_pre_req, params)
+
+    sql_pre_req = """
+                    create TEMP TABLE tt_sp_ev_end AS
+                      SELECT
+                        ev.id event_id,
+                        ev.type type,
+                        ev.starts_on starts_on,
+                        ev.ends_on ends_on,
+                        sp.stock_entity_id stock_entity_id,
+                        max(sp.for_date) for_date,
+                        sp.close close
+                      FROM events ev
+                        INNER JOIN tt_sp sp INDEXED BY tt_idx_sp_dt_desc_seid
+                          ON
+                            ev.id = sp.event_id
+                            AND
+                            ((ev.ends_on IS NULL AND sp.for_date > date(ev.starts_on, :dmoeb) AND sp.for_date <= ev.starts_on)
+                             OR
+                             (ev.ends_on IS NOT NULL AND sp.for_date > ev.starts_on AND sp.for_date <= ev.ends_on))
+                      GROUP BY ev.id, ev.type, ev.starts_on, ev.ends_on, sp.stock_entity_id;
+                  """
+    params = {"dmoeb": date_margin_of_error_back}
+    conn.execute(sql_pre_req, params)
+
+    sql_pre_req = """
+                    create TEMP TABLE tt_sp_after_ev AS
+                      SELECT
+                        ev.id event_id,
+                        ev.type,
+                        ev.starts_on,
+                        ev.ends_on,
+                        sp.stock_entity_id,
+                        sp.for_date,
+                        sp.close
+                      FROM events ev
+                        INNER JOIN tt_sp sp
+                          ON
+                            ev.id = sp.event_id
+                            AND
+                            ((ev.ends_on IS NULL AND sp.for_date > ev.starts_on AND sp.for_date < date(ev.starts_on, :dmoef))
+                              OR (ev.ends_on IS NOT NULL AND sp.for_date > ev.ends_on AND sp.for_date < date(ev.ends_on, :dmoef)))
+                             AND sp.for_date =
+                                 (SELECT sp_inner.for_date
+                                  FROM tt_sp sp_inner INDEXED BY tt_idx_sp_dt_asc_seid
+                                  WHERE
+                                        sp_inner.stock_entity_id = sp.stock_entity_id
+                                        AND
+                                        ((ev.ends_on IS NULL AND sp_inner.for_date > ev.starts_on AND sp_inner.for_date < date(ev.starts_on, :dmoef))
+                                        OR
+                                         (ev.ends_on IS NOT NULL AND sp_inner.for_date > ev.ends_on AND sp_inner.for_date < date(ev.ends_on, :dmoef)))
+                                  LIMIT 1 OFFSET :days_after);
+                              """
+    params = {"dmoef": date_margin_of_error_forward, "days_after": days_after}
+    conn.execute(sql_pre_req, params)
+
+    sql_pre_req = """
+                    CREATE TEMP TABLE tt_source AS
+                    SELECT
+                      ae.stock_entity_id stock_entity_id,
+                      e.short_name_en short_name_en,
+                      be_se_ee.before_dt before_date,
+                      be_se_ee.before_close before_close,
+                      be_se_ee.start_date start_date,
+                      be_se_ee.start_close start_close,
+                      be_se_ee.end_date  end_date,
+                      be_se_ee.end_close end_close,
+                      ae.for_date        after_date,
+                      ae.close           after_close
+                    FROM tt_sp_after_ev ae
+                      INNER JOIN {entity} e
+                      INNER JOIN
+                      (SELECT
+                         ee.event_id,
+                         ee.stock_entity_id,
+                         ee.starts_on,
+                         ee.ends_on,
+                         be_se.before_dt,
+                         be_se.before_close,
+                         be_se.start_date,
+                         be_se.start_close,
+                         ee.for_date end_date,
+                         ee.close    end_close
+                       FROM tt_sp_ev_end ee
+                         INNER JOIN (
+                                      SELECT
+                                        be.event_id,
+                                        be.stock_entity_id,
+                                        be.for_date before_dt,
+                                        be.close    before_close,
+                                        se.for_date start_date,
+                                        se.close    start_close
+                                      FROM tt_sp_before_ev be
+                                        INNER JOIN tt_sp_ev_start se
+                                          ON
+                                            be.event_id = se.event_id
+                                            AND be.stock_entity_id = se.stock_entity_id) be_se
+                           ON
+                             ee.event_id = be_se.event_id
+                             AND ee.stock_entity_id = be_se.stock_entity_id) be_se_ee
+                        ON
+                          e.id = ae.stock_entity_id
+                          AND ae.event_id = be_se_ee.event_id
+                          AND ae.stock_entity_id = be_se_ee.stock_entity_id;
+                        """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id])
+    conn.execute(sql_pre_req)
+
     sql = """
-            select 	sp_starts_on.stock_entity_id,
- 				e.short_name_en,
+            select
+                    stock_entity_id,
+                            short_name_en,
 
-                count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 >= 0 then 1 else NULL end) * 1.0 /
-                (count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 >= 0 then 1 else NULL end) +
-                    count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_before,
+                    count(case when ((start_close - before_close) / before_close) * 100 >= 0 then 1 else NULL end) * 1.0 /
+                    (count(case when ((start_close - before_close) / before_close) * 100 >= 0 then 1 else NULL end) +
+                     count(case when ((start_close - before_close) / before_close) * 100 < 0 then 1 else NULL end)) * 100                            up_prob_before,
 
-                count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 < 0 then 1 else NULL end) * 1.0 /
-                (count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 >= 0 then 1 else NULL end) +
-                    count(case when ((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_before,
+                    count(case when ((start_close - before_close) / before_close) * 100 < 0 then 1 else NULL end) * 1.0 /
+                    (count(case when ((start_close - before_close) / before_close) * 100 >= 0 then 1 else NULL end) +
+                     count(case when ((start_close - before_close) / before_close) * 100 < 0 then 1 else NULL end)) * 100                            down_prob_before,
 
-                count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_starts_on.close) * 100 >= 0 then 1 else NULL end) * 1.0 /
-                (count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_ends_on.close) * 100 >= 0 then 1 else NULL end) +
-                    count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_ends_on.close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_between,
+                    count(case when ((end_close - start_close) / start_close) * 100 >= 0 then 1 else NULL end) * 1.0 /
+                    (count(case when ((end_close - start_close) / end_close) * 100 >= 0 then 1 else NULL end) +
+                     count(case when ((end_close - start_close) / end_close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_between,
 
-                count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_starts_on.close) * 100 < 0 then 1 else NULL end) * 1.0 /
-                (count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_ends_on.close) * 100 >= 0 then 1 else NULL end) +
-                    count(case when ((sp_ends_on.close - sp_starts_on.close) / sp_ends_on.close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_between,
+                    count(case when ((end_close - start_close) / start_close) * 100 < 0 then 1 else NULL end) * 1.0 /
+                    (count(case when ((end_close - start_close) / end_close) * 100 >= 0 then 1 else NULL end) +
+                     count(case when ((end_close - start_close) / end_close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_between,
 
-                count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 >= 0 then 1 else NULL end) * 1.0 /
-                (count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 >= 0 then 1 else NULL end) +
-                    count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_after,
+                    count(case when ((after_close - end_close) / after_close) * 100 >= 0 then 1 else NULL end) * 1.0 /
+                    (count(case when ((after_close - end_close) / after_close) * 100 >= 0 then 1 else NULL end) +
+                     count(case when ((after_close - end_close) / after_close) * 100 < 0 then 1 else NULL end)) * 100 up_prob_after,
 
-                count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 < 0 then 1 else NULL end) * 1.0 /
-                (count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 >= 0 then 1 else NULL end) +
-                    count(case when ((sp_after_event.close - sp_ends_on.close) / sp_after_event.close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_after
-            from stock_prices as sp_starts_on
-            inner join stock_prices as sp_before_event
-            inner JOIN stock_prices as sp_ends_on
-            inner join stock_prices as sp_after_event
-            inner join events AS ev
-            inner join {entity} AS e
-                on
-                sp_starts_on.stock_entity_type_id = :setid
-                and ev.event_group_id = :egid
-                and sp_starts_on.stock_entity_id IN (select id from {entity} limit 20)
-
-                and sp_starts_on.stock_entity_id = sp_before_event.stock_entity_id
-                and sp_starts_on.stock_entity_type_id = sp_after_event.stock_entity_type_id
-                and sp_starts_on.stock_entity_id = sp_after_event.stock_entity_id
-                and sp_starts_on.stock_entity_type_id = sp_ends_on.stock_entity_type_id
-                and sp_starts_on.stock_entity_id = sp_ends_on.stock_entity_id
-
-                and sp_starts_on.for_date > date(ev.starts_on, '-1 months')
-                and ((ev.ends_on is not NULL and sp_starts_on.for_date < date(ev.ends_on, '1 months'))
-                            or (ev.ends_on is NULL and sp_starts_on.for_date < date(ev.starts_on, '1 months')))
-
-                and sp_starts_on.for_date = (select for_date from stock_prices
-                                                                where for_date > date(ev.starts_on, '-1 months')
-                                                                and for_date <= ev.starts_on
-                                                                and stock_entity_id = sp_starts_on.stock_entity_id
-                                                                and stock_entity_type_id = sp_starts_on.stock_entity_type_id
-                                                                ORDER BY for_date DESC LIMIT 1)
-
-                and sp_before_event.for_date = (select for_date from stock_prices
-                                                                where for_date > date(ev.starts_on, '-1 months')
-                                                                and	for_date < sp_starts_on.for_date
-                                                                and stock_entity_id = sp_starts_on.stock_entity_id
-                                                                and stock_entity_type_id = sp_starts_on.stock_entity_type_id
-                                                                order by for_date desc limit 1 offset :days_before)
-
-                and ((ev.ends_on is not null
-                            and sp_ends_on.for_date = (select for_date from stock_prices
-                                                                where for_date > date(ev.starts_on)
-                                                                and for_date <= ev.ends_on
-                                                                and stock_entity_id = sp_starts_on.stock_entity_id
-                                                                and stock_entity_type_id = sp_starts_on.stock_entity_type_id
-                                                                ORDER BY for_date DESC LIMIT 1))
-                        OR
-                         (ev.ends_on is NULL and sp_ends_on.for_date = sp_starts_on.for_date))
-
-                and sp_after_event.for_date = (select for_date from stock_prices
-                                                                where
-                                                                            ((ev.ends_on is not NULL and for_date < date(ev.ends_on, '1 months'))
-                                                                            or
-                                                                             (ev.ends_on is NULL and for_date < date(ev.starts_on, '1 months')))
-                                                                and
-                                                                            ((ev.ends_on is not NULL and for_date > ev.ends_on)
-                                                                             or
-                                                                             (ev.ends_on is NULL and for_date > sp_starts_on.for_date))
-                                                                and stock_entity_id = sp_starts_on.stock_entity_id
-                                                                and stock_entity_type_id = sp_starts_on.stock_entity_type_id
-                                                                order by for_date asc limit 1 offset :days_after)
-
-                and sp_starts_on.stock_entity_id = e.id
-                GROUP BY sp_starts_on.stock_entity_id
-                ORDER BY up_prob_before desc, up_prob_after desc;
-           """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[set_id])
-
-
-    params = {"setid": set_id, "egid": eg_id, "days_before": days_before - 1, "days_after": days_after - 1}
-
-    cursor = conn.execute(sql, params)
+                    count(case when ((after_close - end_close) / after_close) * 100 < 0 then 1 else NULL end) * 1.0 /
+                    (count(case when ((after_close - end_close) / after_close) * 100 >= 0 then 1 else NULL end) +
+                     count(case when ((after_close - end_close) / after_close) * 100 < 0 then 1 else NULL end)) * 100 down_prob_after
+            from tt_source
+            GROUP BY stock_entity_id
+            ORDER BY up_prob_before desc, up_prob_after desc;
+          """
+    cursor = conn.execute(sql)
 
     result_1 = [dict(id=r[0], name_en=r[1], up_prob_before=r[2], down_prob_before=r[3],
                      up_prob_between=r[4], down_prob_between=r[5],
@@ -344,86 +594,101 @@ def what_was_the_effect_of_an_event_group_on_a_stock_entity(setid, seid, egid, d
     conn = _get_open_db_connection(use_row_factory=False, register_udfs=False)
 
     sql = """
-            select 	sp_starts_on.stock_entity_id,
- 				e.short_name_en,
+            SELECT
+              sp_evs.stock_entity_id,
+              e.short_name_en,
 
-				sp_before_event.for_date as before_date,
-				sp_before_event.close as before_close,
-				((sp_starts_on.close - sp_before_event.close) / sp_before_event.close) * 100   cp_before,
+              sp_bev.for_date         AS                           before_date,
+              sp_bev.close    AS                                   before_close,
+              ((sp_evs.close - sp_bev.close) / sp_bev.close) * 100 cp_before,
 
-				sp_starts_on.for_date as start_date,
-				sp_starts_on.close as start_close,
-				((sp_ends_on.close - sp_starts_on.close) / sp_starts_on.close) * 100 cp_between,
+              sp_evs.for_date AS                                   start_date,
+              sp_evs.close    AS                                   start_close,
+              ((sp_eve.close - sp_evs.close) / sp_evs.close) * 100 cp_between,
 
-				sp_ends_on.for_date as end_date,
-				sp_ends_on.close as end_close,
-				((sp_after_event.close - sp_ends_on.close) / sp_ends_on.close) * 100 cp_after,
+              sp_eve.for_date AS                                   end_date,
+              sp_eve.close    AS                                   end_close,
+              ((sp_aev.close - sp_eve.close) / sp_eve.close) * 100 cp_after,
 
-				sp_after_event.for_date as after_date,
-				sp_after_event.close as after_close
-            from stock_prices as sp_starts_on
-            inner join stock_prices as sp_before_event
-            inner JOIN stock_prices as sp_ends_on
-            inner join stock_prices as sp_after_event
-            inner join events AS ev
-            inner join {entity} AS e
-                    on
-                    sp_starts_on.stock_entity_type_id = :setid
-                    and ev.event_group_id = :egid
-                    and sp_starts_on.stock_entity_id = :seid
+              sp_aev.for_date AS                                   after_date,
+              sp_aev.close    AS                                   after_close
+            FROM stock_prices AS sp_evs
+              INNER JOIN stock_prices AS sp_bev
+              INNER JOIN stock_prices AS sp_eve
+              INNER JOIN stock_prices AS sp_aev
+              INNER JOIN events AS ev
+              INNER JOIN {entity} AS e
+                ON
+                  sp_evs.stock_entity_type_id = :setid
+                  AND ev.event_group_id = :egid
+                  AND sp_evs.stock_entity_id = :seid
 
-                    and sp_starts_on.stock_entity_type_id = sp_before_event.stock_entity_type_id
-                    and sp_starts_on.stock_entity_id = sp_before_event.stock_entity_id
-                    and sp_starts_on.stock_entity_type_id = sp_after_event.stock_entity_type_id
-                    and sp_starts_on.stock_entity_id = sp_after_event.stock_entity_id
-                    and sp_starts_on.stock_entity_type_id = sp_ends_on.stock_entity_type_id
-                    and sp_starts_on.stock_entity_id = sp_ends_on.stock_entity_id
+                  and sp_bev.for_date > date(ev.starts_on, '-1 months')
+                  and sp_bev.for_date < ev.starts_on
+                  and sp_evs.for_date > date(ev.starts_on, '-1 months')
+                  and sp_evs.for_date <= ev.starts_on
+                  and ((ev.ends_on is NULL and sp_eve.for_date > date(ev.starts_on, '-1 months') and sp_evs.for_date <= ev.starts_on)
+                    OR
+                       (ev.ends_on is not NULL and sp_eve.for_date > ev.starts_on and sp_evs.for_date <= ev.ends_on))
+                  and ((ev.ends_on is NULL and sp_aev.for_date > ev.starts_on and sp_evs.for_date < date(ev.starts_on, '1 months'))
+                    OR
+                       (ev.ends_on is not NULL and sp_aev.for_date > ev.ends_on and sp_evs.for_date < date(ev.ends_on, '1 months')))
 
-                    and sp_starts_on.for_date > date(ev.starts_on, '-1 months')
-                    and ((ev.ends_on is not NULL and sp_starts_on.for_date < date(ev.ends_on, '1 months'))
-                                or (ev.ends_on is NULL and sp_starts_on.for_date < date(ev.starts_on, '1 months')))
+                  AND sp_evs.stock_entity_type_id = sp_bev.stock_entity_type_id
+                  AND sp_evs.stock_entity_id = sp_bev.stock_entity_id
+                  AND sp_evs.stock_entity_type_id = sp_aev.stock_entity_type_id
+                  AND sp_evs.stock_entity_id = sp_aev.stock_entity_id
+                  AND sp_evs.stock_entity_type_id = sp_eve.stock_entity_type_id
+                  AND sp_evs.stock_entity_id = sp_eve.stock_entity_id
 
-                    and sp_starts_on.for_date = (select for_date from stock_prices
-                                                                    where for_date > date(ev.starts_on, '-1 months')
-                                                                    and for_date <= ev.starts_on
-                                                                    and stock_entity_id = sp_starts_on.stock_entity_id
-                                                                    and stock_entity_type_id = sp_starts_on.stock_entity_type_id
-                                                                    ORDER BY for_date DESC LIMIT 1)
+                  AND sp_evs.for_date > date(ev.starts_on, '-1 months')
+                  AND ((ev.ends_on IS NOT NULL AND sp_evs.for_date < DATE(ev.ends_on, '1 months'))
+                       OR (ev.ends_on IS NULL AND sp_evs.for_date < DATE(ev.starts_on, '1 months')))
 
-                    and sp_before_event.for_date = (select for_date from stock_prices
-                                                                    where for_date > date(ev.starts_on, '-1 months')
-                                                                    and	for_date < sp_starts_on.for_date
-                                                                    and stock_entity_id = sp_starts_on.stock_entity_id
-                                                                    and stock_entity_type_id = sp_starts_on.stock_entity_type_id
-                                                                    order by for_date desc limit 1 offset :days_before)
+                  AND sp_evs.for_date = (SELECT for_date
+                                               FROM stock_prices INDEXED BY idx_sp_dt_desc_setid_asc
+                                               WHERE for_date > DATE(ev.starts_on, '-1 months')
+                                                     AND for_date <= ev.starts_on
+                                                     AND stock_entity_id = sp_evs.stock_entity_id
+                                                     AND stock_entity_type_id = sp_evs.stock_entity_type_id
+                                               LIMIT 1)
 
-                    and ((ev.ends_on is not null
-                                and sp_ends_on.for_date = (select for_date from stock_prices
-                                                                    where for_date > date(ev.starts_on)
-                                                                    and for_date <= ev.ends_on
-                                                                    and stock_entity_id = sp_starts_on.stock_entity_id
-                                                                    and stock_entity_type_id = sp_starts_on.stock_entity_type_id
-                                                                    ORDER BY for_date DESC LIMIT 1))
-                            OR
-                             (ev.ends_on is NULL and sp_ends_on.for_date = sp_starts_on.for_date))
+                  AND sp_bev.for_date = (SELECT for_date
+                                                  FROM stock_prices INDEXED BY idx_sp_dt_desc_setid_asc
+                                                  WHERE for_date > DATE(ev.starts_on, '-1 months')
+                                                        AND for_date < ev.starts_on
+                                                        AND stock_entity_id = sp_evs.stock_entity_id
+                                                        AND stock_entity_type_id = sp_evs.stock_entity_type_id
+                                                  LIMIT 1 OFFSET :days_before)
 
-                    and sp_after_event.for_date = (select for_date from stock_prices
-                                                                    where
-                                                                                ((ev.ends_on is not NULL and for_date < date(ev.ends_on, '1 months'))
-                                                                                or
-                                                                                 (ev.ends_on is NULL and for_date < date(ev.starts_on, '1 months')))
-                                                                    and
-                                                                                ((ev.ends_on is not NULL and for_date > ev.ends_on)
-                                                                                 or
-                                                                                 (ev.ends_on is NULL and for_date > sp_starts_on.for_date))
-                                                                    and stock_entity_id = sp_starts_on.stock_entity_id
-                                                                    and stock_entity_type_id = sp_starts_on.stock_entity_type_id
-                                                                    order by for_date asc limit 1 offset :days_after)
+                  AND ((ev.ends_on IS NOT NULL
+                        AND sp_eve.for_date = (SELECT for_date
+                                                   FROM stock_prices INDEXED BY idx_sp_dt_desc_setid_asc
+                                                   WHERE for_date > DATE(ev.starts_on)
+                                                         AND for_date <= ev.ends_on
+                                                         AND stock_entity_id = sp_evs.stock_entity_id
+                                                         AND stock_entity_type_id = sp_evs.stock_entity_type_id
+                                                   LIMIT 1))
+                       OR
+                       (ev.ends_on IS NULL AND sp_eve.for_date = sp_evs.for_date))
 
-                    and sp_starts_on.stock_entity_id = e.id
+                  AND sp_aev.for_date = (SELECT for_date
+                                                 FROM stock_prices INDEXED BY idx_sp_dt_asc_setid_asc
+                                                 WHERE
+                                                   ((ev.ends_on IS NOT NULL AND for_date < DATE(ev.ends_on, '1 months'))
+                                                    OR
+                                                    (ev.ends_on IS NULL AND for_date < DATE(ev.starts_on, '1 months')))
+                                                   AND
+                                                   ((ev.ends_on IS NOT NULL AND for_date > ev.ends_on)
+                                                    OR
+                                                    (ev.ends_on IS NULL AND for_date > ev.starts_on))
+                                                   AND stock_entity_id = sp_evs.stock_entity_id
+                                                   AND stock_entity_type_id = sp_evs.stock_entity_type_id
+                                                 LIMIT 1 OFFSET :days_after)
+
+                  AND sp_evs.stock_entity_id = e.id
             ORDER BY ev.starts_on;
            """.format(entity=STOCK_ENTITY_TYPE_TABLE_NAME[setid])
-
 
     params = {"setid": setid, "seid": seid, "egid": egid, "days_before": days_before - 1, "days_after": days_after - 1}
 
