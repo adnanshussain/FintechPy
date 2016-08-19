@@ -90,8 +90,8 @@ def q4_aggregate_probabilities(setid, days_before, days_after, event_group_id):
 def q4_aggregate_probabilities_partial(setid, days_before, days_after, event_group_id):
     return flask.render_template('publicweb/partials/q4_aggregate_probabilities_partial.html',
                                  result=fsqs.what_is_the_effect_of_event_group_on_stock_entities(set_id=setid,
-                                    eg_id=event_group_id, days_before=days_before, days_after=days_after),
-                                 egid=event_group_id, days_before=days_before, days_after=days_after)
+                                    event_group_id=event_group_id, days_before=days_before, days_after=days_after),
+                                    egid=event_group_id, days_before=days_before, days_after=days_after)
 
 @_pwbp.route('/q4/individual_probability/<int:seid>/<int:days_before>/<int:days_after>/<int:event_group_id>')
 def q4_individual_probability(seid, days_before, days_after, event_group_id):
