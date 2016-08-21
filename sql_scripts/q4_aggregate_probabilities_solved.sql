@@ -3,8 +3,8 @@
 -- .stats ON
 .nullvalue NULL
 
-.mode csv
-.out all.csv
+-- .mode csv
+-- .out all.csv
 
 CREATE TEMP TABLE tt_sp AS
   SELECT
@@ -286,8 +286,6 @@ FROM stock_prices AS sp_evs
 
       AND sp_evs.stock_entity_id = e.id
 ORDER BY ev.starts_on;
-
-
 
 -- .out all.csv
 

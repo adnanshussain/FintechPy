@@ -1,7 +1,7 @@
 .timer ON
 
-.mode csv
-.out 1.csv
+-- .mode csv
+-- .out 1.csv
 
 -- With Nested Inner Joins
 /*SELECT
@@ -84,10 +84,10 @@ SELECT
   e.short_name_ar,
   sp2.for_date,
   sp2.close,
-  cp(sp2.close, sp1.close),
+--   cp(sp2.close, sp1.close),
   sp1.for_date,
   sp1.close,
-  cp(sp1.close, sp3.close),
+--   cp(sp1.close, sp3.close),
   sp3.for_date,
   sp3.close
 FROM stock_prices AS sp1
@@ -96,7 +96,7 @@ FROM stock_prices AS sp1
   INNER JOIN companies e ON
                            sp1.stock_entity_type_id = 1
                            --and sp1.stock_entity_id IN (SELECT id from companies LIMIT 10)
-                           {seid}
+                           --{seid}
                            AND sp1.for_date > date('2002-02-08', '-1 months')
                            AND sp1.for_date <= '2002-02-08'
                            AND sp2.for_date > date('2002-02-08', '-1 months')
