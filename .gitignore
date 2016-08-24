@@ -2,6 +2,7 @@
 **/__pycache__
 .idea/
 webapp/static/vendor/jquery.powertip-1.2.0/
+webapp/static/vendor/fusion-charts-xt/
 node_modules/
 webapp/data/
 webapp/static/vendor/amcharts/

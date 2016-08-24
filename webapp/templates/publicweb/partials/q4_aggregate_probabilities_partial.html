@@ -1,20 +1,20 @@
 {% for d in result.main_data %}
 	{% set up_before_class = 'ui green label' if d['up_prob_before'] > d['down_prob_before'] else 'ui label' %}
-	{% set down_before_class = 'ui red label' if d['down_prob_before'] > d['up_prob_before'] else 'ui label' %}
+	{% set up_aggr_perf_before_class = 'ui green label' if d['up_aggr_perf_before'] > 0 else 'ui label' %}
 	{% set up_between_class = 'ui green label' if d['up_prob_between'] > d['down_prob_between'] else 'ui label' %}
-	{% set down_between_class = 'ui red label' if d['down_prob_between'] > d['up_prob_between'] else 'ui label' %}
+	{% set up_aggr_perf_between_class = 'ui green label' if d['up_aggr_perf_between'] > 0 else 'ui label' %}
 	{% set up_after_class = 'ui green label' if d['up_prob_after'] > d['down_prob_after'] else 'ui label' %}
-	{% set down_after_class = 'ui red label' if d['down_prob_after'] > d['up_prob_after'] else 'ui label' %}
+	{% set up_aggr_perf_after_class = 'ui green label' if d['up_aggr_perf_after'] > 0 else 'ui label' %}
     <tr class="center aligned">
         <td>{{ d['name_en'] }}</td>
-        <td><span class="{{up_before_class}}">{{ '{:.2f}'.format(d['up_prob_before']) }} %</span></td>
-        <td><span class="{{down_before_class}}">{{ '{:.2f}'.format(d['down_prob_before']) }} %</span></td>
+        <td><div id="se_{{d['id']}}" style="height: 100px">{{ '{:.2f}'.format(d['up_prob_before']) }}</div></td>
+        <td><span class="{{up_aggr_perf_before_class}}">{{ '{:.2f}'.format(d['up_aggr_perf_before']) }} %</span></td>
 
 		<td>{% if result.has_range_events %}<span class="{{up_between_class}}">{{ '{:.2f}'.format(d['up_prob_between']) }} %</span>{% endif %}</td>
-        <td>{% if result.has_range_events %}<span class="{{down_between_class}}">{{ '{:.2f}'.format(d['down_prob_between']) }} %</span>{% endif %}</td>
+        <td>{% if result.has_range_events %}<span  class="{{up_aggr_perf_between_class}}">{{ '{:.2f}'.format(d['up_aggr_perf_between']) }} %</span>{% endif %}</td>
 
         <td><span class="{{up_after_class}}">{{ '{:.2f}'.format(d['up_prob_after']) }} %</span></td>
-		<td><span class="{{down_after_class}}">{{ '{:.2f}'.format(d['down_prob_after']) }} %</span></td>
+		<td><span class="{{up_aggr_perf_after_class}}">{{ '{:.2f}'.format(d['up_aggr_perf_after']) }} %</span></td>
         <td><a href="{{ url_for('publicweb.q4_individual_probability', seid=d['id'], days_before=days_before, days_after=days_after, event_group_id=egid) }}">Drill Down</a></td>
     </tr>
 {% endfor %}
