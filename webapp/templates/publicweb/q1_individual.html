@@ -78,16 +78,11 @@
 	$(function() {
 		$('.ui.dropdown').dropdown();
 		$('.menu .item').tab();
-
         $('#ask_question').on('click', askQuestion);
-
         buildChart();
-
 		p = getQuestionParameters();
-
         drawChart(1, p.seid, p.direction, p.percent, p.from_yr, p.to_yr);
 	});
-
 	function getQuestionParameters() {
 		return({
 			seid: $('#stock_entity').val(),
@@ -97,31 +92,24 @@
 			to_yr: $('#to_yr').val()
 		});
 	}
-
 	function askQuestion() {
 		p = getQuestionParameters();
-
 		drawChart(1, p.seid, p.direction, p.percent, p.from_yr, p.to_yr, true, true);
 	}
-
 	var chart;
-
 	function drawChart(setid, seid, direction, percent, from_yr, to_yr,rotate_chart = false, redraw = false) {
-		loadWithAjax('{{ url_for('api.q1_individual') }}' + '/' + setid + '/' + seid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr,
 		loadWithAjax('{{ url_for('api.q1_individual') }}' + '/' + setid + '/' + seid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr,
 			// Success Handler
 			function(data) {
             	chart.dataProvider = data.main_data;
 				chart.titles = [{
-					"text": "Number of times " 
-							//+ $('#stock_entity option:selected').text().trim() 
+					"text": "Number of times "
+							//+ $('#stock_entity option:selected').text().trim()
 							+ data.name_ar
 							+ " was " + direction + " " + percent + "% from " + from_yr + " to " + to_yr
 				}];
 				chart.valueAxes[0].guides[0].value = data[data.length - 1];
-
 				$('#selected_company_name').html(data.name_en);
-
 				if(redraw) {
             		chart.validateData()
             	}
@@ -131,7 +119,6 @@
 				}
 			});
 	}
-
 	function buildChart() {
 		chart = new AmCharts.AmSerialChart();
 		buildAmBarChart(chart, "year", "frequency", function(e) {
