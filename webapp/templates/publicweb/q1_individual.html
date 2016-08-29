@@ -108,6 +108,7 @@
 
 	function drawChart(setid, seid, direction, percent, from_yr, to_yr,rotate_chart = false, redraw = false) {
 		loadWithAjax('{{ url_for('api.q1_individual') }}' + '/' + setid + '/' + seid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr,
+		loadWithAjax('{{ url_for('api.q1_individual') }}' + '/' + setid + '/' + seid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr,
 			// Success Handler
 			function(data) {
             	chart.dataProvider = data.main_data;

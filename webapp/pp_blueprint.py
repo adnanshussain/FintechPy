@@ -23,7 +23,7 @@ def all_questions():
 @_pwbp.route('/q1/aggregate/<int:setid>/<direction>/<percent>/<int:from_yr>/<int:to_yr>/<sort_order>', defaults = {'top_n':10})
 @_pwbp.route('/q1/aggregate/<int:setid>/<direction>/<percent>/<int:from_yr>/<int:to_yr>/<sort_order>/<top_n>')
 def q1_aggregate(setid, direction, percent, from_yr, to_yr, sort_order, top_n):
-    return flask.render_template('publicweb/q1_aggregate.html', title='Insight #1', setid=setid, direction=direction,
+    return flask.render_template('publicweb/q1_newlayout.html', title='Insight #1', setid=setid, direction=direction,
                                  percent=float(percent),from_yr=from_yr, to_yr=to_yr, min_yr=1993, max_yr=2016,
                                  sort_order=sort_order, top_n=top_n,
                                  all_sectors=fsqs.get_all_sectors())

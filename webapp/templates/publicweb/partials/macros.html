@@ -3,12 +3,14 @@
 {%- endmacro %}
 
 {% macro select_by_range(id, min_value, max_value, selected_value, compact='compact') %}
-<select class="ui {{compact}} selection dropdown" id="{{id}}">
+<select class="ui {{ compact}} selection dropdown" id="{{id}}">
 	{% for i in range(min_value, max_value + 1) -%}
 	<option value="{{ i }}" {% if i== selected_value %} selected="selected" {% endif %}>{{ i }}</option>
 	{% endfor %}
 </select>
 {% endmacro %}
+
+
 
 {% macro select_by_dict_list(id, list, selected_value, compact='compact', searchable=False) %}
 <select class="ui {{compact}} {% if searchable %} search {% else %} selection {% endif%} dropdown" id="{{id}}">
