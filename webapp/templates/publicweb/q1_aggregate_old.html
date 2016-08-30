@@ -1,0 +1,182 @@
+{% import 'publicweb/partials/macros.html' as macros %}
+{% extends 'publicweb/layout.html' %}
+{% block body %}
+<div class="ui padded grid">
+	<div class="one wide column">
+		<span class="ui orange large header"><i class="idea icon"></i></span>
+	</div>
+	<div class="fifteen wide column">
+		<span class="ui orange large header">How many times were</span>
+		{{ macros.spacer() }}
+		<select class="ui compact selection dropdown" id="stock_entity_type">
+			<option value="1">Companies</option>
+			<option value="3">Markets</option>
+			<option value="2">Commodities</option>
+		</select>
+		{{ macros.spacer() }}
+		<div class="ui radio checkbox">
+			<input type="radio" name="direction" value="above" {% if direction == 'above' %} checked {% endif %}>
+			<label>Above</label>
+		</div>
+		<div style="width: .5em; display: inline-block"></div>
+		<div class="ui radio checkbox">
+			<input type="radio" name="direction" value="below" {% if direction == 'below' %} checked {% endif %}>
+			<label>Below</label>
+		</div>
+		<div style="width: .5em; display: inline-block"></div>
+		<span class="ui orange large header"> by </span>
+		<div class="ui right labeled input">
+			<input type="text" style="width: 5em" value="{{ percent }}" id="percentage">
+			<div class="ui basic label">%</div>
+		</div>
+		<span class="ui orange large header"> from </span>
+		{{ macros.select_by_range("from_yr", min_yr, max_yr, from_yr) }}
+ 		<span class="ui orange large header"> to </span>
+ 		{{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
+ 		{{ macros.spacer() }}
+		<button class="ui button" id="ask_question"> ?</button>
+	</div>
+</div>
+
+<div class="ui centered grid">
+	<div class="fifteen wide column">
+		<div class="ui header" style="text-decoration: underline">Filters</div>
+		<div class="ui grid">
+			<div class="three wide column">
+				<div class="ui one column grid">
+					<div class="row">
+						<div class="column">
+							<div>Sectors:</div>
+							<select class="ui search dropdown" id="=sector">
+								{% for sector in all_sectors %}
+								<option value="{{ sector.id }}">{{ sector.name_en }}</option>
+								{% endfor %}
+							</select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="column">
+							<label>Top N: </label>
+							<select class="ui compact search dropdown" id="top_n">
+								{% for i in range(10, 100, 10) %}
+								<option value="{{ i }}" {% if i == 10 %} selected="selected" {% endif %}>{{ i }}</option>
+								{% endfor %}
+							</select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="column">
+							<button class="ui grey button" id="reverse_the_order" data-fintech="desc">Reverse Order</button>
+						</div>
+					</div>
+					<div class="row">
+						<div class="column">
+							<button class="ui grey button" id="rotate_chart">Rotate Chart</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="thirteen wide column">
+				<div class="ui top attached tabular menu">
+					<a class="item active" data-tab="visual">Visual</a>
+					<a class="item" data-tab="textual">Textual</a>
+				</div>
+				<div class="ui bottom attached tab segment active" data-tab="visual">
+					<div id="chartdiv" style="height: 500px; width: 100%"></div>
+					<div id="curtain"><span>Chart is loading...</span></div>
+				</div>
+				<div class="ui bottom attached tab segment" data-tab="textual" id="text_result">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="myToolTip" style="display: none;">
+    <p><b>Help</b></p>
+    <p>This will reverse the order of the graph from what is currently shown.<br/>
+        Will toggle between Min and Max counts.
+    </p>
+    <p><a href="#">For a detailed example click here.</a></p>
+</div>
+{% endblock %}
+{% block page_js %}
+<script type="text/javascript">
+	$(function() {
+		$('.ui.dropdown').dropdown();
+		$('.menu .item').tab();
+
+		$("#reverse_the_order").data("powertiptarget", "myToolTip");
+        $("#reverse_the_order").powerTip({
+            placement: "e",
+            mouseOnToPopup: true
+        });
+
+        $('#ask_question').on('click', askQuestion);
+        $('#top_n').on('change', askQuestion);
+        $('#reverse_the_order').on('click', function() {
+        	curr_val = $('#reverse_the_order').data("fintech")
+        	if(curr_val == 'desc')
+        		$('#reverse_the_order').data("fintech", 'asc');
+        	else
+        		$('#reverse_the_order').data("fintech", 'desc');
+
+        	askQuestion();
+        });
+
+        buildChart();
+
+        askQuestion(false);
+	});
+
+	function getQuestionParameters() {
+		return({
+			setid: $('#stock_entity_type').val(),
+			direction: $('input[name=direction]:checked').val(),
+			percent: $('#percentage').val(),
+			from_yr: $('#from_yr').val(),
+			to_yr: $('#to_yr').val(),
+			sort_order: $('#reverse_the_order').data("fintech"),
+			top_n: $('#top_n').val()
+		});
+	}
+
+	function askQuestion(redraw) {
+		p = getQuestionParameters();
+
+		drawChart(p.setid, p.direction, p.percent, p.from_yr, p.to_yr, p.sort_order, p.top_n, true, redraw);
+	}
+
+	// The chart object
+	var chart;
+
+	function drawChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart = false, redraw = false) {
+		loadWithAjax('{{ url_for('api.q1_aggregate') }}' + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr + '/' + sort_order + '/' + top_n,
+			// Success Handler
+			function(data) {
+            	chart.dataProvider = data.main_data;
+				chart.titles = [{
+					"text": "Number of times " + $('#stock_entity_type option:selected').text()
+							+ " where " + direction + " " + percent + "% from " + from_yr + " to " + to_yr
+				}];
+				chart.valueAxes[0].guides[0].value = data.average;
+
+				if(redraw) {
+            		chart.validateData()
+            	}
+            	else {
+					// WRITE
+					chart.write("chartdiv");
+				}
+			});
+	}
+
+	function buildChart() {
+		chart = new AmCharts.AmSerialChart();
+		buildAmBarChart(chart, "short_name_en", "frequency", function(e) {
+			p = getQuestionParameters();
+        	window.location = '{{ url_for('publicweb.q1_individual') }}' + '/' + p.setid + '/' + e.item.dataContext.seid + '/' + p.direction + '/' + p.percent + '/' + p.from_yr + '/' + p.to_yr
+        });
+	}
+</script>
+{% endblock %}

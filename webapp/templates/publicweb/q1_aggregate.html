@@ -1,117 +1,39 @@
 {% import 'publicweb/partials/macros.html' as macros %}
-{% extends 'publicweb/layout.html' %}
-{% block body %}
-<div class="ui padded grid">
-	<div class="one wide column">
-		<span class="ui orange large header"><i class="idea icon"></i></span>
-	</div>
-	<div class="fifteen wide column">
-		<span class="ui orange large header">How many times were</span>
-		{{ macros.spacer() }}
-		<select class="ui compact selection dropdown" id="stock_entity_type">
-			<option value="1">Companies</option>
-			<option value="3">Markets</option>
-			<option value="2">Commodities</option>
-		</select>
-		{{ macros.spacer() }}
-		<div class="ui radio checkbox">
-			<input type="radio" name="direction" value="above" {% if direction == 'above' %} checked {% endif %}>
-			<label>Above</label>
-		</div>
-		<div style="width: .5em; display: inline-block"></div>
-		<div class="ui radio checkbox">
-			<input type="radio" name="direction" value="below" {% if direction == 'below' %} checked {% endif %}>
-			<label>Below</label>
-		</div>
-		<div style="width: .5em; display: inline-block"></div>
-		<span class="ui orange large header"> by </span>
-		<div class="ui right labeled input">
-			<input type="text" style="width: 5em" value="{{ percent }}" id="percentage">
-			<div class="ui basic label">%</div>
-		</div>
-		<span class="ui orange large header"> from </span>
-		{{ macros.select_by_range("from_yr", min_yr, max_yr, from_yr) }}
- 		<span class="ui orange large header"> to </span>
- 		{{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
- 		{{ macros.spacer() }}
-		<button class="ui button" id="ask_question"> ?</button>
-	</div>
-</div>
+{% extends 'publicweb/_layout_question.html' %}
 
-<div class="ui centered grid">
-	<div class="fifteen wide column">
-		<div class="ui header" style="text-decoration: underline">Filters</div>
-		<div class="ui grid">
-			<div class="three wide column">
-				<div class="ui one column grid">
-					<div class="row">
-						<div class="column">
-							<div>Sectors:</div>
-							<select class="ui search dropdown" id="=sector">
-								{% for sector in all_sectors %}
-								<option value="{{ sector.id }}">{{ sector.name_en }}</option>
-								{% endfor %}
-							</select>
-						</div>
-					</div>
-					<div class="row">
-						<div class="column">
-							<label>Top N: </label>
-							<select class="ui compact search dropdown" id="top_n">
-								{% for i in range(10, 100, 10) %}
-								<option value="{{ i }}" {% if i == 10 %} selected="selected" {% endif %}>{{ i }}</option>
-								{% endfor %}
-							</select>
-						</div>
-					</div>
-					<div class="row">
-						<div class="column">
-							<button class="ui grey button" id="reverse_the_order" data-fintech="desc">Reverse Order</button>
-						</div>
-					</div>
-					<div class="row">
-						<div class="column">
-							<button class="ui grey button" id="rotate_chart">Rotate Chart</button>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="thirteen wide column">
-				<div class="ui top attached tabular menu">
-					<a class="item active" data-tab="visual">Visual</a>
-					<a class="item" data-tab="textual">Textual</a>
-				</div>
-				<div class="ui bottom attached tab segment active" data-tab="visual">
-					<div id="chartdiv" style="height: 500px; width: 100%"></div>
-					<div id="curtain"><span>Chart is loading...</span></div>
-				</div>
-				<div class="ui bottom attached tab segment" data-tab="textual" id="text_result">
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div id="myToolTip" style="display: none;">
-    <p><b>Help</b></p>
-    <p>This will reverse the order of the graph from what is currently shown.<br/>
-        Will toggle between Min and Max counts.
-    </p>
-    <p><a href="#">For a detailed example click here.</a></p>
-</div>
+{% block the_question %}
+ <h1 class="question ui center">
+                How many times was
+                <select id="stock_entity_type" class="ui compact selection dropdown">
+                   	<option value="1">Companies</option>
+			        <option value="3">Markets</option>
+			        <option value="2">Commodities</option>
+                </select>
+                <select id="get_direction" class="ui compact selection dropdown">
+                    <option value="above" {% if direction=='above' %} selected="selected" {% endif %}>Above</option>
+                    <option value="below" {% if direction=='below' %} selected="selected" {% endif %}>Below</option>
+                </select>
+                 by
+            <input type="text" id="percentage" placeholder="" class="inputfield center aligned" value="{{ percent }}" style="width:50px;" onkeypress="this.style.width = ((this.value.length + 1) * 15) + 'px';" name="">
+            % from
+            {{ macros.select_by_range("from_yr", min_yr, max_yr, from_yr ) }}
+            to
+            {{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
+            <button class="button submit yellow padding" id="ask_question" >?</button>
+        </h1>
 {% endblock %}
+
+{% block content %}
+    			<div id="chartdiv" style="height: 500px; width: 100%"></div>
+                <div id="curtain"><span>Chart is loading...</span></div>
+{% endblock %}
+
 {% block page_js %}
-<script type="text/javascript">
+    <script type="text/javascript">
 	$(function() {
 		$('.ui.dropdown').dropdown();
 		$('.menu .item').tab();
-
 		$("#reverse_the_order").data("powertiptarget", "myToolTip");
-        $("#reverse_the_order").powerTip({
-            placement: "e",
-            mouseOnToPopup: true
-        });
-
         $('#ask_question').on('click', askQuestion);
         $('#top_n').on('change', askQuestion);
         $('#reverse_the_order').on('click', function() {
@@ -132,12 +54,12 @@
 	function getQuestionParameters() {
 		return({
 			setid: $('#stock_entity_type').val(),
-			direction: $('input[name=direction]:checked').val(),
+			direction: $('#get_direction').val(),
 			percent: $('#percentage').val(),
 			from_yr: $('#from_yr').val(),
 			to_yr: $('#to_yr').val(),
-			sort_order: $('#reverse_the_order').data("fintech"),
-			top_n: $('#top_n').val()
+			sort_order: 'asc',
+			top_n: 10
 		});
 	}
 
@@ -179,4 +101,11 @@
         });
 	}
 </script>
+
+<!-- AmCharts -->
+<script src="{{ url_for('static', filename='vendor/amcharts/amcharts.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='vendor/amcharts/serial.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='vendor/amcharts/pie.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='vendor/amcharts/plugins/dataloader/dataloader.min.js') }}" type="text/javascript"></script>
+
 {% endblock %}
