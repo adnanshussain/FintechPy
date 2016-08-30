@@ -12,6 +12,7 @@
 	<!--[if IE]>
 	<link href="/stylesheets/ie.css" media="screen, projection" rel="stylesheet" type="text/css"/>
 	<![endif]-->
+
 </head>
 <body>
 <div class="main ui container fluid fintech">
@@ -28,9 +29,11 @@
 		</div>
 	</div>
 	<div class="fluid clearfix question page center aligned relative">
+		<form class="ui form">
 		{% block the_question %}
 
 		{% endblock %}
+		</form>
 		<div class="button gray share right floated">
 			Share
 		</div>
@@ -41,174 +44,9 @@
 				<div class="collapse-btn"></div>
 			</div>
 			<div class="scroll">
+				{% block page_filter %}
 
-				<div class="row sorting devider bottom">
-					<label>Show top</label>
-					<div class="ui dropdown">
-						<select>
-							<option>10</option>
-							<option>20</option>
-							<option>40</option>
-							<option>50</option>
-							<option>100</option>
-							<option>200</option>
-						</select>
-						<i class="dropdown icon"></i>
-						<div class="text">State</div>
-						<div class="menu">
-							<div class="item active">10</div>
-							<div class="item">20</div>
-
-						</div>
-					</div>
-				</div>
-
-				<div class="filter opened">
-					<div class="text">Sectors</div>
-					<div class="filters">
-						<div class="item checkbox">
-							<input id="01" type="checkbox" name="">
-							<label for="01">Insurance</label>
-						</div>
-						<div class="item checkbox">
-							<input id="02" type="checkbox" name="">
-							<label for="02">Banks</label>
-						</div>
-						<div class="item checkbox">
-							<input id="03" type="checkbox" name="">
-							<label for="03">Cement</label>
-						</div>
-						<div class="item checkbox">
-							<input id="04" type="checkbox" name="">
-							<label for="04">Agriculturet &amp; Food Industries</label>
-						</div>
-						<div class="item checkbox">
-							<input id="05" type="checkbox" name="">
-							<label for="05">Energy &amp; Utilities</label>
-							<div class="item checkbox">
-								<input id="06" type="checkbox" name="">
-								<label for="06">Petrochemical Industries</label>
-							</div>
-							<div class="item checkbox">
-								<input id="07" type="checkbox" name="">
-								<label for="07">Media and Publishing</label>
-							</div>
-							<div class="item checkbox">
-								<input id="08" type="checkbox" name="">
-								<label for="08">Transportation</label>
-							</div>
-							<div class="item checkbox">
-								<input id="09" type="checkbox" name="">
-								<label for="09">Hotels &amp; Tourism</label>
-							</div>
-							<div class="item checkbox">
-								<input id="10" type="checkbox" name="">
-								<label for="10">Building &amp; Construction</label>
-							</div>
-							<div class="item checkbox">
-								<input id="11" type="checkbox" name="">
-								<label for="11">Industrial investment</label>
-							</div>
-						</div>
-						<div class="item checkbox">
-							<input id="12" type="checkbox" name="">
-							<label for="12">Petrochemical Industries</label>
-						</div>
-						<div class="item checkbox">
-							<input id="13" type="checkbox" name="">
-							<label for="13">Media &amp; Publishing</label>
-						</div>
-						<div class="item checkbox">
-							<input id="14" type="checkbox" name="">
-							<label for="14">Transportation</label>
-						</div>
-						<div class="item checkbox">
-							<input id="15" type="checkbox" name="">
-							<label for="15">Hotels &amp; Tourism</label>
-						</div>
-						<div class="item checkbox">
-							<input id="16" type="checkbox" name="">
-							<label for="16">Building &amp; Construction</label>
-						</div>
-						<div class="item checkbox">
-							<input id="17" type="checkbox" name="">
-							<label for="17">Industrial investment</label>
-						</div>
-					</div>
-				</div>
-				<div class="filter">
-					<div class="text">Sectors</div>
-					<div class="filters">
-						<div class="item checkbox">
-							<input id="01" type="checkbox" name="">
-							<label for="01">Insurance</label>
-						</div>
-						<div class="item checkbox">
-							<input id="02" type="checkbox" name="">
-							<label for="02">Banks</label>
-						</div>
-						<div class="item checkbox">
-							<input id="03" type="checkbox" name="">
-							<label for="03">Cement</label>
-						</div>
-						<div class="item checkbox">
-							<input id="04" type="checkbox" name="">
-							<label for="04">Agriculturet &amp; Food Industries</label>
-						</div>
-						<div class="item checkbox">
-							<input id="05" type="checkbox" name="">
-							<label for="05">Energy &amp; Utilities</label>
-							<div class="item checkbox">
-								<input id="06" type="checkbox" name="">
-								<label for="06">Petrochemical Industries</label>
-							</div>
-							<div class="item checkbox">
-								<input id="07" type="checkbox" name="">
-								<label for="07">Media and Publishing</label>
-							</div>
-							<div class="item checkbox">
-								<input id="08" type="checkbox" name="">
-								<label for="08">Transportation</label>
-							</div>
-							<div class="item checkbox">
-								<input id="09" type="checkbox" name="">
-								<label for="09">Hotels &amp; Tourism</label>
-							</div>
-							<div class="item checkbox">
-								<input id="10" type="checkbox" name="">
-								<label for="10">Building &amp; Construction</label>
-							</div>
-							<div class="item checkbox">
-								<input id="11" type="checkbox" name="">
-								<label for="11">Industrial investment</label>
-							</div>
-						</div>
-						<div class="item checkbox">
-							<input id="12" type="checkbox" name="">
-							<label for="12">Petrochemical Industries</label>
-						</div>
-						<div class="item checkbox">
-							<input id="13" type="checkbox" name="">
-							<label for="13">Media &amp; Publishing</label>
-						</div>
-						<div class="item checkbox">
-							<input id="14" type="checkbox" name="">
-							<label for="14">Transportation</label>
-						</div>
-						<div class="item checkbox">
-							<input id="15" type="checkbox" name="">
-							<label for="15">Hotels &amp; Tourism</label>
-						</div>
-						<div class="item checkbox">
-							<input id="16" type="checkbox" name="">
-							<label for="16">Building &amp; Construction</label>
-						</div>
-						<div class="item checkbox">
-							<input id="17" type="checkbox" name="">
-							<label for="17">Industrial investment</label>
-						</div>
-					</div>
-				</div>
+				{% endblock %}
 			</div>
 		</section>
 
@@ -217,62 +55,26 @@
 				<a class="item active">Visual</a>
 				<a class="item">Textual</a>
 			</div>
-			<div class="fluid content question">
-				<div class="row grid clearfix">
-					<div class="one column holder">
-						<div class="column">
-							{% block content %}
-							{% endblock %}
-						</div>
-					</div>
+			{% block content %}
 
-				</div>
-				<footer>
-					&copy; 2016 Argaam Fintech FZ.LLC
-				</footer>
-			</div>
+			{% endblock %}
+
 		</section>
 	</div>
 </div>
 <!-- jQuery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js" type="text/javascript"></script>
+
 <!-- Layout files -->
 <script src="{{ url_for('static', filename='javascripts/semantic.min.js') }}"></script>
-<!--<script src="{{ url_for('static', filename='javascripts/docs.js') }}"></script>-->
-<!--<script src="{{ url_for('static', filename='javascripts/form.js') }}"></script>-->
-
-<script>
-	$(".filter .text").click(function () {
-		$(this).parent().toggleClass("opened");
-	});
-	$(".collapse-btn").click(function () {
-		$(".ui.content.container").toggleClass("expand-content");
-	});
-	$(".top .menu").click(function () {
-		$(".ui.content.container").toggleClass("expand-content");
-	});
-</script>
-<script type='text/javascript'>
-	$(window).scroll(function () {
-		var scroll = $(window).scrollTop();
-		var topheight = $(".question.page").height() + 90;
-		var topheight2 = $(".main > .top").height();
-		var toptotalheight = topheight + topheight2;
-		$(".page.filters .scroll").css("padding-bottom", toptotalheight - scroll);
-		if (scroll >= 146) {
-			$(".page.filters").addClass("fixed");
-			$(".page.filters").css("top", "0");
-		}
-		else {
-			$(".page.filters").removeClass("fixed");
-		}
-	});
-</script>
+<script type="text/javascript" src="{{ url_for('static', filename='javascripts/fintech.js') }}"></script>
 
 {% block page_js %}
+
 {% endblock %}
 
 <!-- Fintech Webapp JS -->
 <script src="{{ url_for('static', filename='js/fintech_webapp.js') }}" type="text/javascript"></script>
+
 </body>
 </html>

@@ -20,35 +20,104 @@
             to
             {{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
             <button class="button submit yellow padding" id="ask_question" >?</button>
-        </h1>
+ </h1>
+{% endblock %}
+
+{% block page_filter %}
+    <div class="row sorting devider bottom">
+					<label>Show top</label>
+					<select id="top_n" class="ui compact selection dropdown">
+                   	<option value="10">10</option>
+			        <option value="15">15</option>
+			        <option value="20">20</option>
+                </select>
+				</div>
+
+				<div class="filter opened">
+					<div class="text">Sectors</div>
+					<div class="filters">
+                         {% for sectors in all_sectors %}
+                            <div class="item checkbox">
+                                <input id="{{ sectors.id }}" value="{{ sectors.id }}" type="checkbox" name="filter_item">
+                                <label for="{{ sectors.id }}">{{ sectors.name_en }}</label>
+                            </div>
+                         {% endfor %}
+					</div>
+				</div>
+				<div class="filter">
+					<div class="text">Sectors</div>
+					<div class="filters">
+
+					</div>
+				</div>
 {% endblock %}
 
 {% block content %}
-    			<div id="chartdiv" style="height: 500px; width: 100%"></div>
-                <div id="curtain"><span>Chart is loading...</span></div>
+<div class="fluid content question">
+				 <div class="title page clearfix">
+
+                    <div class="right floated toolbar">
+                        <a href="" class="rotate"></a>
+                        <a id="reverse_the_order" class="a-z" data-fintech="desc"></a>
+                    </div>
+                </div>
+				<div class="row grid clearfix">
+					<div class="one column holder">
+						<div class="column">
+
+							<div id="chartdiv" style="height: 500px; width: 100%"></div>
+                            <div id="curtain"><span>Chart is loading...</span></div>
+						</div>
+					</div>
+
+				</div>
+                 <footer>
+					&copy; 2016 Argaam Fintech FZ.LLC
+				</footer>
+			</div>
 {% endblock %}
 
 {% block page_js %}
     <script type="text/javascript">
 	$(function() {
+	    askQuestion(false);
 		$('.ui.dropdown').dropdown();
 		$('.menu .item').tab();
 		$("#reverse_the_order").data("powertiptarget", "myToolTip");
         $('#ask_question').on('click', askQuestion);
         $('#top_n').on('change', askQuestion);
         $('#reverse_the_order').on('click', function() {
+            //alert('click');
         	curr_val = $('#reverse_the_order').data("fintech")
-        	if(curr_val == 'desc')
-        		$('#reverse_the_order').data("fintech", 'asc');
-        	else
-        		$('#reverse_the_order').data("fintech", 'desc');
+        	//console.log(curr_val);
+        	if(curr_val == 'desc'){
+        	    $('#reverse_the_order').data('fintech','asc');
+                $('#reverse_the_order').attr('data-fintech', 'asc')
+        	}
 
-        	askQuestion();
+        	else{
+        	   $('#reverse_the_order').data('fintech','desc');
+        	   $('#reverse_the_order').attr('data-fintech', 'desc')
+        	}
+
+
+        	askQuestion(true);
         });
 
         buildChart();
 
-        askQuestion(false);
+        var selected = [];
+        $(".item input").click(function() {
+                 if ($(this).is(':checked')) {
+                    selected.push($(this).attr('id'));
+                    //console.log(selected);
+                  }
+                  else if (!$(this).is(':checked')) {
+                    selected.pop($(this).attr('id'));
+                    //console.log(selected);
+                  }
+         });
+
 	});
 
 	function getQuestionParameters() {
@@ -58,14 +127,12 @@
 			percent: $('#percentage').val(),
 			from_yr: $('#from_yr').val(),
 			to_yr: $('#to_yr').val(),
-			sort_order: 'asc',
-			top_n: 10
+			sort_order: $('#reverse_the_order').data("fintech"),
+			top_n:  $('#top_n').val()
 		});
 	}
-
 	function askQuestion(redraw) {
 		p = getQuestionParameters();
-
 		drawChart(p.setid, p.direction, p.percent, p.from_yr, p.to_yr, p.sort_order, p.top_n, true, redraw);
 	}
 
