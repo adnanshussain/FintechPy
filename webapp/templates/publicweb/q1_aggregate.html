@@ -2,133 +2,146 @@
 {% extends 'publicweb/_layout_question.html' %}
 
 {% block the_question %}
- <h1 class="question ui center">
-                How many times was
-                <select id="stock_entity_type" class="ui compact selection dropdown">
-                   	<option value="1">Companies</option>
-			        <option value="3">Markets</option>
-			        <option value="2">Commodities</option>
-                </select>
-                <select id="get_direction" class="ui compact selection dropdown">
-                    <option value="above" {% if direction=='above' %} selected="selected" {% endif %}>Above</option>
-                    <option value="below" {% if direction=='below' %} selected="selected" {% endif %}>Below</option>
-                </select>
-                 by
-            <input type="text" id="percentage" placeholder="" class="inputfield center aligned" value="{{ percent }}" style="width:50px;" onkeypress="this.style.width = ((this.value.length + 1) * 15) + 'px';" name="">
-            % from
-            {{ macros.select_by_range("from_yr", min_yr, max_yr, from_yr ) }}
-            to
-            {{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
-            <button class="button submit yellow padding" id="ask_question" >?</button>
- </h1>
+<h1 class="question ui center">
+	How many times was
+	<select id="stock_entity_type" class="ui compact selection dropdown">
+		<option value="1">Companies</option>
+		<option value="3">Markets</option>
+		<option value="2">Commodities</option>
+	</select>
+	<select id="get_direction" class="ui compact selection dropdown">
+		<option value="above" {% if direction=='above' %} selected="selected" {% endif %}>Above</option>
+		<option value="below" {% if direction=='below' %} selected="selected" {% endif %}>Below</option>
+	</select>
+	by
+	<input type="text" id="percentage" placeholder="" class="inputfield center aligned" value="{{ percent }}"
+		   style="width:50px;" onkeypress="this.style.width = ((this.value.length + 1) * 15) + 'px';" name="">
+	% from
+	{{ macros.select_by_range("from_yr", min_yr, max_yr, from_yr ) }}
+	to
+	{{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
+	<button class="button submit yellow padding" id="ask_question">?</button>
+</h1>
 {% endblock %}
 
 {% block page_filter %}
-    <div class="row sorting devider bottom">
-					<label>Show top</label>
-					<select id="top_n" class="ui compact selection dropdown">
-                   	<option value="10">10</option>
-			        <option value="15">15</option>
-			        <option value="20">20</option>
-                </select>
-				</div>
-
-				<div class="filter opened">
-					<div class="text">Sectors</div>
-					<div class="filters">
-                         {% for sectors in all_sectors %}
-                            <div class="item checkbox">
-                                <input id="{{ sectors.id }}" value="{{ sectors.id }}" type="checkbox" name="filter_item">
-                                <label for="{{ sectors.id }}">{{ sectors.name_en }}</label>
-                            </div>
-                         {% endfor %}
-					</div>
-				</div>
-				<div class="filter">
-					<div class="text">Sectors</div>
-					<div class="filters">
-
-					</div>
-				</div>
+<div class="row sorting devider bottom">
+	<label>Show top</label>
+	<select id="top_n" class="ui compact selection dropdown">
+		<option value="10">10</option>
+		<option value="15">15</option>
+		<option value="20">20</option>
+	</select>
+</div>
+<div class="filter opened">
+	<div class="text">Sectors</div>
+	<div class="filters">
+		{% for sectors in all_sectors %}
+		<div class="item checkbox">
+			<input id="sector_{{sectors.id}}" value="{{ sectors.id }}" type="checkbox" name="filter_item"
+				   data-id="{{sectors.id}}">
+			<label for="sector_{{sectors.id}}">{{ sectors.name_en }}</label>
+		</div>
+		{% endfor %}
+	</div>
+</div>
 {% endblock %}
 
 {% block content %}
 <div class="fluid content question">
-				 <div class="title page clearfix">
+	<div class="title page clearfix">
 
-                    <div class="right floated toolbar">
-                        <a href="" class="rotate"></a>
-                        <a id="reverse_the_order" class="a-z" data-fintech="desc"></a>
-                    </div>
-                </div>
-				<div class="row grid clearfix">
-					<div class="one column holder">
-						<div class="column">
+		<div class="right floated toolbar">
+			<a href="" class="rotate"></a>
+			<a id="reverse_the_order" class="a-z" data-fintech="desc"></a>
+		</div>
+	</div>
+	<div class="row grid clearfix">
+		<div class="one column holder">
+			<div class="column">
 
-							<div id="chartdiv" style="height: 500px; width: 100%"></div>
-                            <div id="curtain"><span>Chart is loading...</span></div>
-						</div>
-					</div>
-
-				</div>
-                 <footer>
-					&copy; 2016 Argaam Fintech FZ.LLC
-				</footer>
+				<div id="chartdiv" style="height: 500px; width: 100%"></div>
+				<div id="curtain"><span>Chart is loading...</span></div>
 			</div>
+		</div>
+
+	</div>
+	<footer>
+		&copy; 2016 Argaam Fintech FZ.LLC
+	</footer>
+</div>
 {% endblock %}
 
 {% block page_js %}
-    <script type="text/javascript">
-	$(function() {
-	    askQuestion(false);
+<script type="text/javascript">
+	$(function () {
+		askQuestion(false);
 		$('.ui.dropdown').dropdown();
 		$('.menu .item').tab();
 		$("#reverse_the_order").data("powertiptarget", "myToolTip");
-        $('#ask_question').on('click', askQuestion);
-        $('#top_n').on('change', askQuestion);
-        $('#reverse_the_order').on('click', function() {
-            //alert('click');
-        	curr_val = $('#reverse_the_order').data("fintech")
-        	//console.log(curr_val);
-        	if(curr_val == 'desc'){
-        	    //$('#reverse_the_order').data('fintech','asc');
-                $('#reverse_the_order').attr('data-fintech', 'asc')
-        	}
+		$('#ask_question').on('click', askQuestion);
+		$('#top_n').on('change', askQuestion);
+		$('#reverse_the_order').on('click', function () {
+			//alert('click');
+			curr_val = $('#reverse_the_order').data("fintech")
+			//console.log(curr_val);
+			if (curr_val == 'desc') {
+				//$('#reverse_the_order').data('fintech','asc');
+				$('#reverse_the_order').attr('data-fintech', 'asc')
+			}
 
-        	else{
-        	   //$('#reverse_the_order').data('fintech','desc');
-        	   $('#reverse_the_order').attr('data-fintech', 'desc')
-        	}
+			else {
+				//$('#reverse_the_order').data('fintech','desc');
+				$('#reverse_the_order').attr('data-fintech', 'desc')
+			}
 
 
-        	askQuestion(true);
-        });
+			askQuestion(true);
+		});
 
-        buildChart();
+		buildChart();
 
-        var selected = [];
-        $(".item input").click(function() {
-                 if ($(this).is(':checked')) {
-                    selected.push($(this).attr('id'));
-                    console.log(selected);
-                  }
-                  else if (!$(this).is(':checked')) {
-                    selected.pop($(this).attr('id'));
-                    console.log(selected);
-                  }
-         });
+		var selected_sectors = [];
+		$(".item input[id^='sector_']").click(function () {
+			if ($(this).is(':checked')) {
+				selected_sectors.push($(this).data('id'));
+				console.log(selected_sectors);
+			}
+			else if (!$(this).is(':checked')) {
+				index_to_remove = -1;
+				// I have todo this as the "this" inside the function starts referring to the array
+				this_checkbox = this;
+				selected_sectors.findIndex(function (e, i, a) {
+					if (e == $(this_checkbox).data('id')) {
+						index_to_remove = i;
+						return;
+					}
+				});
+				// Note: you cannot do this as you will always pop the last element pushed
+				//selected_sectors.pop($(this).data('id'));
+
+				selected_sectors.splice(index_to_remove, 1);
+				console.log(selected_sectors);
+
+				/*loadWithAjax("{{ url_for('api.q1_aggregate_post') }}", function (data) {
+							console.log('Done');
+						}, 'POST',
+						JSON.stringify({'sectors_to_filter_by': selected_sectors}),
+						'application/json');*/
+			}
+		});
 
 	});
 
 	function getQuestionParameters() {
-		return({
+		return ({
 			setid: $('#stock_entity_type').val(),
 			direction: $('#get_direction').val(),
 			percent: $('#percentage').val(),
 			from_yr: $('#from_yr').val(),
 			to_yr: $('#to_yr').val(),
 			sort_order: $('#reverse_the_order').data("fintech"),
-			top_n:  $('#top_n').val()
+			top_n: $('#top_n').val()
 		});
 	}
 	function askQuestion(redraw) {
@@ -140,32 +153,34 @@
 	var chart;
 
 	function drawChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart = false, redraw = false) {
-		loadWithAjax('{{ url_for('api.q1_aggregate') }}' + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr + '/' + sort_order + '/' + top_n,
-			// Success Handler
-			function(data) {
-            	chart.dataProvider = data.main_data;
-				chart.titles = [{
-					"text": "Number of times " + $('#stock_entity_type option:selected').text()
-							+ " where " + direction + " " + percent + "% from " + from_yr + " to " + to_yr
-				}];
-				chart.valueAxes[0].guides[0].value = data.average;
+		loadWithAjax("{{ url_for('api.q1_aggregate') }}" + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr + '/' + sort_order + '/' + top_n,
+				// Success Handler
+				function (data) {
+					chart.dataProvider = data.main_data;
+					chart.titles = [{
+						"text": "Number of times " + $('#stock_entity_type option:selected').text()
+						+ " where " + direction + " " + percent + "% from " + from_yr + " to " + to_yr
+					}];
+					chart.valueAxes[0].guides[0].value = data.average;
 
-				if(redraw) {
-            		chart.validateData()
-            	}
-            	else {
-					// WRITE
-					chart.write("chartdiv");
+					if (redraw) {
+						chart.validateData()
+					}
+					else {
+						// WRITE
+						chart.write("chartdiv");
+					}
 				}
-			});
+		)
+		;
 	}
 
 	function buildChart() {
 		chart = new AmCharts.AmSerialChart();
-		buildAmBarChart(chart, "short_name_en", "frequency", function(e) {
+		buildAmBarChart(chart, "short_name_en", "frequency", function (e) {
 			p = getQuestionParameters();
-        	window.location = '{{ url_for('publicweb.q1_individual') }}' + '/' + p.setid + '/' + e.item.dataContext.seid + '/' + p.direction + '/' + p.percent + '/' + p.from_yr + '/' + p.to_yr
-        });
+			window.location = "{{ url_for('publicweb.q1_individual') }}" + '/' + p.setid + '/' + e.item.dataContext.seid + '/' + p.direction + '/' + p.percent + '/' + p.from_yr + '/' + p.to_yr
+		});
 	}
 </script>
 
@@ -173,6 +188,7 @@
 <script src="{{ url_for('static', filename='vendor/amcharts/amcharts.js') }}" type="text/javascript"></script>
 <script src="{{ url_for('static', filename='vendor/amcharts/serial.js') }}" type="text/javascript"></script>
 <script src="{{ url_for('static', filename='vendor/amcharts/pie.js') }}" type="text/javascript"></script>
-<script src="{{ url_for('static', filename='vendor/amcharts/plugins/dataloader/dataloader.min.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='vendor/amcharts/plugins/dataloader/dataloader.min.js') }}"
+		type="text/javascript"></script>
 
 {% endblock %}

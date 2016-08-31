@@ -13,6 +13,11 @@ def q1_aggregate(setid, direction, percent, from_yr, to_yr, sort_order, top_n):
                                                                                                       from_yr, to_yr,
                                                                                                       sort_order, top_n))
 
+@_api.route('/q1/aggregate_post', methods=['POST'])
+def q1_aggregate_post():
+    sectors_to_filter_by = flask.request.json['sectors_to_filter_by']
+    return "something"
+
 @_api.route('/q1/individual') # TODO: Only used for url_for in the makeChart JS, need to fix an alternative
 @_api.route('/q1/individual/<int:setid>/<int:seid>/<direction>/<percent>/<int:from_yr>/<int:to_yr>')
 def q1_individual(setid, seid, direction, percent, from_yr, to_yr):
@@ -25,6 +30,6 @@ def q1_individual(setid, seid, direction, percent, from_yr, to_yr):
 @_api.route("/test")
 def testapi():
     # resp = flask.Response()
-    resp = flask.jsonify(fsqs.get_the_number_of_times_stockentities_were_upordown_bypercent_in_year_range(1, 10, 1993, 2016))
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-    return resp
+    # resp = flask.jsonify(fsqs.get_the_number_of_times_stockentities_were_upordown_bypercent_in_year_range(1, 10, 1993, 2016))
+    # resp.headers['Access-Control-Allow-Origin'] = '*'
+    return "What the fuck"
