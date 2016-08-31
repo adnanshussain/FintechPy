@@ -91,12 +91,12 @@
         	curr_val = $('#reverse_the_order').data("fintech")
         	//console.log(curr_val);
         	if(curr_val == 'desc'){
-        	    $('#reverse_the_order').data('fintech','asc');
+        	    //$('#reverse_the_order').data('fintech','asc');
                 $('#reverse_the_order').attr('data-fintech', 'asc')
         	}
 
         	else{
-        	   $('#reverse_the_order').data('fintech','desc');
+        	   //$('#reverse_the_order').data('fintech','desc');
         	   $('#reverse_the_order').attr('data-fintech', 'desc')
         	}
 
@@ -110,11 +110,11 @@
         $(".item input").click(function() {
                  if ($(this).is(':checked')) {
                     selected.push($(this).attr('id'));
-                    //console.log(selected);
+                    console.log(selected);
                   }
                   else if (!$(this).is(':checked')) {
                     selected.pop($(this).attr('id'));
-                    //console.log(selected);
+                    console.log(selected);
                   }
          });
 
