@@ -94,8 +94,6 @@
 				//$('#reverse_the_order').data('fintech','desc');
 				$('#reverse_the_order').attr('data-fintech', 'desc')
 			}
-
-
 			askQuestion(true);
 		});
 
@@ -105,7 +103,7 @@
 		$(".item input[id^='sector_']").click(function () {
 			if ($(this).is(':checked')) {
 				selected_sectors.push($(this).data('id'));
-				console.log(selected_sectors);
+				//console.log(selected_sectors);
 			}
 			else if (!$(this).is(':checked')) {
 				index_to_remove = -1;
@@ -117,18 +115,10 @@
 						return;
 					}
 				});
-				// Note: you cannot do this as you will always pop the last element pushed
-				//selected_sectors.pop($(this).data('id'));
-
 				selected_sectors.splice(index_to_remove, 1);
-				console.log(selected_sectors);
-
-				/*loadWithAjax("{{ url_for('api.q1_aggregate_post') }}", function (data) {
-							console.log('Done');
-						}, 'POST',
-						JSON.stringify({'sectors_to_filter_by': selected_sectors}),
-						'application/json');*/
+				//console.log(selected_sectors);
 			}
+			askQuestion(true,selected_sectors)
 		});
 
 	});
@@ -144,16 +134,31 @@
 			top_n: $('#top_n').val()
 		});
 	}
-	function askQuestion(redraw) {
+
+	function askQuestion(redraw,sector_ids=[]) {
 		p = getQuestionParameters();
+		if(!sector_ids.length == 0){
+			console.log('ajax call');
+			loadWithAjax("{{ url_for('api.q1_aggregate') }}" + '/' + p.setid + '/' +  p.direction + '/' + p.percent + '/' + p.from_yr + '/' + p.to_yr + '/' + p.sort_order + '/' + p.top_n,
+			 				function (data) {
+								console.log('Done');
+							}, 'POST',
+							JSON.stringify({'sectors_to_filter_by': sector_ids}),
+							'application/json');
+		}
+		else{
 		drawChart(p.setid, p.direction, p.percent, p.from_yr, p.to_yr, p.sort_order, p.top_n, true, redraw);
+		}
 	}
 
 	// The chart object
 	var chart;
 
 	function drawChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart = false, redraw = false) {
-		loadWithAjax("{{ url_for('api.q1_aggregate') }}" + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr + '/' + sort_order + '/' + top_n,
+
+		var url="{{ url_for('api.q1_aggregate') }}" + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr + '/' + sort_order + '/' + top_n;
+
+		loadWithAjax(url,
 				// Success Handler
 				function (data) {
 					chart.dataProvider = data.main_data;
