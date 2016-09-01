@@ -20,7 +20,7 @@
 	{{ macros.select_by_range("from_yr", min_yr, max_yr, from_yr ) }}
 	to
 	{{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
-	<button class="button submit yellow padding" id="ask_question">?</button>
+	<a class="button submit yellow padding" id="ask_question" >?</a>
 </h1>
 {% endblock %}
 
@@ -73,31 +73,29 @@
 {% endblock %}
 
 {% block page_js %}
+
 <script type="text/javascript">
 	$(function () {
-		askQuestion(false);
 		$('.ui.dropdown').dropdown();
 		$('.menu .item').tab();
 		$("#reverse_the_order").data("powertiptarget", "myToolTip");
 		$('#ask_question').on('click', askQuestion);
 		$('#top_n').on('change', askQuestion);
-		$('#reverse_the_order').on('click', function () {
-			//alert('click');
-			curr_val = $('#reverse_the_order').data("fintech")
+		$("#reverse_the_order").on('click',function(){
+			curr_val =$('#reverse_the_order').attr('data-fintech')
 			//console.log(curr_val);
 			if (curr_val == 'desc') {
-				//$('#reverse_the_order').data('fintech','asc');
 				$('#reverse_the_order').attr('data-fintech', 'asc')
 			}
 
 			else {
-				//$('#reverse_the_order').data('fintech','desc');
 				$('#reverse_the_order').attr('data-fintech', 'desc')
 			}
 			askQuestion(true);
 		});
 
 		buildChart();
+		askQuestion(false);
 
 		var selected_sectors = [];
 		$(".item input[id^='sector_']").click(function () {
@@ -130,7 +128,7 @@
 			percent: $('#percentage').val(),
 			from_yr: $('#from_yr').val(),
 			to_yr: $('#to_yr').val(),
-			sort_order: $('#reverse_the_order').data("fintech"),
+			sort_order: $('#reverse_the_order').attr('data-fintech'),
 			top_n: $('#top_n').val()
 		});
 	}

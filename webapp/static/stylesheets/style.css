@@ -738,12 +738,14 @@ a {
   font-family: "SFUIDisplay-Bold";
 }
 .fintech .question[class*="page"] .submit {
-  font-size: 17px;
-  font-family: "SFUIDisplay-Bold";
-  position: relative;
-  top: -3px;
-  height: 32px;
-  margin-left: 7px;
+    font-size: 17px;
+    font-family: "SFUIDisplay-Bold";
+    position: relative;
+    top: -5px;
+    height: 32px;
+    margin-left: 7px;
+    display: inline-block;
+    line-height: 32px;
 }
 .fintech .question[class*="page"] .menu {
   font-size: 12px;
