@@ -398,7 +398,7 @@ a {
   top: 100%;
   left: 0;
   min-width: calc(100% + 2px);
-  width: calc(100%+2px);
+  width: calc(100% + 2px);
   max-height: 16.02857143rem;
   -moz-border-radius: 0 0 3px 3px;
   -webkit-border-radius: 0;
