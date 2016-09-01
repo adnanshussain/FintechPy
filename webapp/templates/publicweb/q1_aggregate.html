@@ -2,7 +2,8 @@
 {% extends 'publicweb/_layout_question.html' %}
 
 {% block the_question %}
-<h1 class="question ui center">
+<form class="ui form" id="_form">
+	<h1 class="question ui center">
 	How many times was
 	<select id="stock_entity_type" class="ui compact selection dropdown">
 		<option value="1">Companies</option>
@@ -22,6 +23,7 @@
 	{{ macros.select_by_range("to_yr", min_yr, max_yr, to_yr) }}
 	<a class="button submit yellow padding" id="ask_question" >?</a>
 </h1>
+</form>
 {% endblock %}
 
 {% block page_filter %}
@@ -176,6 +178,14 @@
 			window.location = "{{ url_for('publicweb.q1_individual') }}" + '/' + p.setid + '/' + e.item.dataContext.seid + '/' + p.direction + '/' + p.percent + '/' + p.from_yr + '/' + p.to_yr
 		});
 	}
+
+	//prevent form posting on Enter
+	$("#_form").on("submit", function(){
+		//console.log('form posted');
+		askQuestion(true);
+	    return false;
+
+	});
 </script>
 
 <!-- AmCharts -->
