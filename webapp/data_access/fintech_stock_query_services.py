@@ -26,20 +26,30 @@ def get_the_number_of_times_stockentities_were_upordown_bypercent_in_year_range(
                                                                                  to_yr,
                                                                                  order_by_direction="desc",
                                                                                  top_n=10,
-                                                                                 filter_by_sector=None):
+                                                                                 sectors_to_filter_by=None):
     conn = _get_open_db_connection(use_row_factory=False, register_udfs=False)
+
+    join_on_sectors = ''
+
+    if sectors_to_filter_by != None:
+        join_on_sectors = """
+            inner join sectors s on t2.sector_id = s.id
+            and s.id in ({0})
+        """.format(','.join(str(val) for val in sectors_to_filter_by))
 
     sql = """
             select t1.stock_entity_id, t2.short_name_en, count(0) frequency from stock_prices t1
             inner join {0} t2 on t1.stock_entity_id = t2.id
               and t1.stock_entity_type_id = ?
+              {sector_filter_condition}
             where year >= ? and year <= ?
                 and t1.change_percent {cond} ?
             group by t1.stock_entity_id
             order by frequency {order_by_direction}
             LIMIT ?;
           """.format(STOCK_ENTITY_TYPE_TABLE_NAME[set_id], cond=(" >= " if direction == 'above' else " < "),
-                     order_by_direction=order_by_direction)
+                     order_by_direction=order_by_direction,
+                     sector_filter_condition=join_on_sectors)
 
     percent = percent * -1 if direction == 'below' else percent
 
@@ -628,14 +638,11 @@ def what_was_the_effect_of_an_event_group_on_a_stock_entity(setid, seid, egid, d
 # for_date = datetime.datetime.strptime('2015-01-21', '%Y-%m-%d')
 
 def test():
-    # result = what_was_the_effect_of_an_event_group_on_a_stock_entity(1, 22, 2, 3, 3)
-    result = what_is_the_effect_of_event_group_on_stock_entities(1, 2, 3, 3)
+    result = get_the_number_of_times_stockentities_were_upordown_bypercent_in_year_range(1, 'above', 5.0, 2000, 2010,
+                                                                                'desc', 5, [15,11])
 
     for r in result['main_data']:
         print(r)
-
-    for k, v in result.items():
-        print(k, v)
 
 # test()
 
