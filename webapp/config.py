@@ -1,9 +1,8 @@
 import os
-from flask import json
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-class ConfigBase:
+class _ConfigBase:
     ###############################
     ### Custom Configs          ###
     ###############################
@@ -28,7 +27,7 @@ class ConfigBase:
                             % (ARGAAM_MSSQL_SERVER_IP, ARGAAM_MSSQL_DB_NAME, ARGAAM_MSSQL_DB_USER_NAME, \
                                ARGAAM_MSSQL_DB_PWD)
 
-class DevConfig(ConfigBase):
+class _DevConfig(_ConfigBase):
     HOST = "0.0.0.0"
     # HOST = None
     PORT = 5001
@@ -36,7 +35,7 @@ class DevConfig(ConfigBase):
     #TEMPLATES_AUTO_RELOAD = True
     #EXPLAIN_TEMPLATE_LOADING = True
 
-class ProdConfig(ConfigBase):
+class _ProdConfig(_ConfigBase):
     ARGAAM_MSSQL_SERVER_IP = '172.16.3.65'
     ARGAAM_MSSQL_DB_NAME = 'ArgaamPlus'
     ARGAAM_MSSQL_DB_USER_NAME = 'argaamplususer'
@@ -45,9 +44,11 @@ class ProdConfig(ConfigBase):
                             % (ARGAAM_MSSQL_SERVER_IP, ARGAAM_MSSQL_DB_NAME, ARGAAM_MSSQL_DB_USER_NAME, \
                                ARGAAM_MSSQL_DB_PWD)
 
-configs = {
-    'Dev': DevConfig(),
-    'Prod': ProdConfig()
+_configs = {
+    'Dev': _DevConfig(),
+    'Prod': _ProdConfig()
 }
 
-ENVAR_FINTECH_CONFIG = 'FINTECH_CONFIG'
+_ENVAR_FINTECH_CONFIG = 'FINTECH_CONFIG'
+
+active_config = _configs[os.getenv(_ENVAR_FINTECH_CONFIG)]

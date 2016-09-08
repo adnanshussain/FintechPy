@@ -1,6 +1,6 @@
 import datetime, os
 import sqlite3
-import webapp.config as config
+from ..config import active_config
 
 ###############################
 ### User Defined Functions  ###
@@ -20,7 +20,7 @@ def _udf_day_of_week(dt):
 ###  Generic DB Functions   ###
 ###############################
 def _get_open_db_connection(use_row_factory=True, register_udfs=False):
-    conn = sqlite3.connect(config.configs[os.getenv(config.ENVAR_FINTECH_CONFIG)].NEW_DB_PATH)
+    conn = sqlite3.connect(active_config.NEW_DB_PATH)
 
     if use_row_factory:
         conn.row_factory = sqlite3.Row

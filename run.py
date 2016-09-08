@@ -1,7 +1,7 @@
-from webapp import theapp, config
+from webapp import theapp, active_config
 
 ###############################
 ### Run the App             ###
 ###############################
 if __name__ == "__main__":
-    theapp.run(host=config.DevConfig.HOST, port=config.DevConfig.PORT)
+    theapp.run(host=active_config.HOST, port=active_config.PORT)

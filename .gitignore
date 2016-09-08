@@ -21,3 +21,5 @@ FintechPy.sln
 webapp/static/js/bootstrap-datetimepicker.min.js
 webapp/static/js/bootstrap.min.js
 webapp/static/js/moment.min.js
+utilities/HistoricalDataFromTickerCharts
+utilities/tadawul_events

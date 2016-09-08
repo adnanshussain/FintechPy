@@ -3,16 +3,15 @@
 # Depending on what you plan to do it's a good place to import public stuff from the modules in your package so
 # people can simply use from yourpackage import whatever instead of
 # having to use from yourpackage.somemodule import whatever.
-import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from . import config
+from .config import active_config
 
 ######################
 ### Create the App ###
 ######################
 theapp = Flask(__name__)
-theapp.config.from_object(config.configs[os.getenv(config.ENVAR_FINTECH_CONFIG)])
+theapp.config.from_object(active_config)
 
 db = SQLAlchemy(theapp)
 

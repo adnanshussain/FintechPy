@@ -4,11 +4,11 @@ import os
 
 from sqlalchemy.sql import func, select
 from webapp import db
-from webapp.config import configs, ENVAR_FINTECH_CONFIG
+from webapp.config import active_config
 from webapp.data_access.sqlalchemy_models import Country, Market, Sector, Company, Commodity, StockPrice
 
 def _get_mssql_connection(as_dict=False):
-    config = configs[os.getenv(ENVAR_FINTECH_CONFIG)]
+    config = active_config
     return pymssql.connect(config.ARGAAM_MSSQL_SERVER_IP, config.ARGAAM_MSSQL_DB_USER_NAME,
                            config.ARGAAM_MSSQL_DB_PWD, config.ARGAAM_MSSQL_DB_NAME,
                            as_dict=as_dict)
