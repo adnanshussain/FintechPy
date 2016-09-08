@@ -92,3 +92,124 @@ function buildAmBarChart(chart, categoryFieldName, valueFieldName, barClickHandl
     chart.creditsPosition = "top-right";
     //});
 }
+
+
+
+
+
+
+
+
+
+function buildFusionChart(categoryFieldName, valueFieldName,get_chart_properties,barClickHandler) {
+    var chart_properties={
+                    "theme": "fint",
+
+                    "caption": get_chart_properties.titles[0].maintext,
+                    "subCaption": get_chart_properties.titles[0].subtext,
+                    "captionFontSize": "28",
+                    "subcaptionFontSize": "20",
+                    "subcaptionFontBold": "0",
+                    "subCaptionFont": "sans-serif",
+
+                    "xAxisName":valueFieldName,
+                    "xAxisNameFontSize" :"18",
+                    "yAxisName": categoryFieldName,
+                    "yAxisNameFontSize" :"18",
+
+                    "paletteColors": "#ff704d",
+
+                    "placeValuesInside": "0",
+                    "valueFontColor": "#000000",
+
+                    "showAxisLines": "0",
+                    "axisLineAlpha": "0",
+                    "divLineAlpha": "20",
+                    "alignCaptionWithCanvas": "1",
+                    "showAlternateVGridColor": "0",
+
+                    "toolTipColor": "#ffffff",
+                    "toolTipBorderThickness": "0",
+                    "toolTipBgColor": "#000000",
+                    "toolTipBgAlpha": "80",
+                    "toolTipBorderRadius": "2",
+                    "toolTipPadding": "5",
+
+                    "plotGradientColor":"#FFFF00",
+                    "usePlotGradientColor": "1",
+
+                    "trendValueBorderColor": "#123456",
+                    "trendValueBorderDashGap": "3",
+                    "trendValueFontBold": "1",
+                    "trendValueFontSize":"12",
+                    "trendValueBgColor":"#ffa31a",
+                    "trendValueBorderPadding":"5",
+                    "trendValueBgColor":"#ffa31a",
+
+                    "labelFontSize":"12",
+                    "labelFontBold":"1",
+                    "labelFont":"sans-serif"
+
+                };
+    var data = get_chart_properties.data;
+    var chart_data= [];
+    for (var i=0; i < data.length; i++)
+    {
+
+        chart_data.push({
+        label: data[i].short_name_en,
+        value: data[i].frequency,
+        id: data[i].seid
+        });
+    }
+
+    var DrawChart = new FusionCharts({
+            type: 'bar2d',
+            renderAt: 'chartdiv',
+            width: '100%',
+            height: '500',
+            dataFormat: 'json',
+            dataSource: {
+                "chart": chart_properties,
+                "data":chart_data ,
+                "trendlines": [
+                    {
+                        "line": [
+                            {
+                                "startvalue": get_chart_properties.average,
+                                "color": "#ff4000",
+                                "valueOnTop": "1",
+                                "displayvalue": "Average",
+                                "thickness": "4"
+                            }
+                        ]
+                    }
+                ],
+                "events": {
+                    // Attach to beforeInitialize
+                    "initialized": function () {
+                        console.log("Initialized mychart... event called");
+                    }
+                }
+
+            }
+        });
+
+
+        var myEventListener = function (eventObj, eventArgs) {
+            var id;
+            for (var i=0; i < chart_data.length; i++)
+            {
+               if(chart_data[i].label ==  eventArgs.categoryLabel  && chart_data[i].value == eventArgs.value) {
+                    id = chart_data[i].id;
+                    console.log('id is'+id);
+                    return barClickHandler(id);
+                }
+            }
+        };
+
+        DrawChart.addEventListener("dataPlotClick", myEventListener);
+        DrawChart.render();
+
+
+}

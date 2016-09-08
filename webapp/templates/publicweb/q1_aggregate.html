@@ -98,7 +98,6 @@
 			askQuestion(true);
 		});
 
-		buildChart();
 		askQuestion(false);
 
 		$(".item input[id^='sector_']").click(function () {
@@ -139,7 +138,8 @@
 	}
 
 	// The chart object
-	var chart;
+	//var chart;
+	var chart_properties = {};
 
 	function drawChart(setid, direction, percent, from_yr, to_yr, sort_order, top_n, rotate_chart = false, redraw = false) {
 		var url="{{ url_for('api.q1_aggregate') }}" + '/' + setid + '/' + direction + '/' + percent + '/' + from_yr + '/' + to_yr + '/' + sort_order + '/' + top_n;
@@ -149,34 +149,34 @@
 		loadWithAjax(url,
 				// Success Handler
 				function (data) {
-					chart.dataProvider = data.main_data;
-					chart.titles = [{
-						"text": "Number of times " + $('#stock_entity_type option:selected').text()
-						+ " where " + direction + " " + percent + "% from " + from_yr + " to " + to_yr
+					<!--chart.dataProvider = data.main_data;-->
+					chart_properties.data = data.main_data;
+					chart_properties.titles = [{
+						"maintext": "Number of times " + $('#stock_entity_type option:selected').text()
+						+ " where " + direction + " " + percent + "%",
+						"subtext":"from " + from_yr + " to " + to_yr
 					}];
-					chart.valueAxes[0].guides[0].value = data.average;
+					chart_properties.average = data.average;
 
-					if (redraw) {
-						chart.validateData()
-					}
-					else {
-						// WRITE
-						chart.write("chartdiv");
-					}
+					buildFusionChart("Count","Companies",chart_properties,function (seid) {
+						p = getQuestionParameters();
+						window.location = "{{ url_for('publicweb.q1_individual') }}" + '/' + p.setid + '/' + seid + '/' + p.direction + '/' + p.percent + '/' + p.from_yr + '/' + p.to_yr
+					});
+
+
+					<!--if (redraw) {-->
+						<!--chart.validateData()-->
+					<!--}-->
+					<!--else {-->
+						<!--// WRITE-->
+						<!--chart.write("chartdiv");-->
+					<!--}-->
 				},
 				has_sector_filters ? 'POST' : 'GET',
 				has_sector_filters ? JSON.stringify({'sectors_to_filter_by': sector_ids_to_filter_by}) : null,
 				has_sector_filters ? 'application/json' : null
 		)
 		;
-	}
-
-	function buildChart() {
-		chart = new AmCharts.AmSerialChart();
-		buildAmBarChart(chart, "short_name_en", "frequency", function (e) {
-			p = getQuestionParameters();
-			window.location = "{{ url_for('publicweb.q1_individual') }}" + '/' + p.setid + '/' + e.item.dataContext.seid + '/' + p.direction + '/' + p.percent + '/' + p.from_yr + '/' + p.to_yr
-		});
 	}
 
 	//prevent form posting on Enter
@@ -192,7 +192,7 @@
 <script src="{{ url_for('static', filename='vendor/amcharts/amcharts.js') }}" type="text/javascript"></script>
 <script src="{{ url_for('static', filename='vendor/amcharts/serial.js') }}" type="text/javascript"></script>
 <script src="{{ url_for('static', filename='vendor/amcharts/pie.js') }}" type="text/javascript"></script>
-<script src="{{ url_for('static', filename='vendor/amcharts/plugins/dataloader/dataloader.min.js') }}"
-		type="text/javascript"></script>
-
+<script src="{{ url_for('static', filename='vendor/amcharts/plugins/dataloader/dataloader.min.js') }}" type="text/javascript"></script>
+<script type="text/javascript" src="http://static.fusioncharts.com/code/latest/fusioncharts.js"></script>
+<script type="text/javascript" src="http://static.fusioncharts.com/code/latest/themes/fusioncharts.theme.fint.js?cacheBust=56"></script>
 {% endblock %}
