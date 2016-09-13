@@ -68,26 +68,21 @@ def write_csv_for(stock_symbol, max_pg_no):
         with open(csv_file_name, mode='a', encoding='utf8') as csvf:
             for i, (a_ar, a_en) in enumerate(zip(all_events_anchors_ar,
                                                  all_events_anchors_en)):
-                # if '\n' in a_ar.contents[3].get_text(strip=True) or\
-                #     ',' in a_ar.contents[3].get_text(strip=True) or \
-                #     '\n' in a_en.contents[3].get_text(strip=True) or \
-                #     ',' in a_en.contents[3].get_text(strip=True):
-                    # print(str(a_ar.contents[3].get_text(strip=True)))
-                    # print('----------------------------------------')
-                    # print(str(a_ar.contents[3].get_text(strip=True)).replace('\n', ' ').replace(',',';'))
+                date_time_components = a_ar.span.find('span', 'time_stamp').get_text(strip=True).replace('\xa0', '').split(' ')
+                if len(date_time_components) == 3:
+                    date_index = 1
+                    time_index = 2
+                else:
+                    date_index = 0
+                    time_index = 1
 
-                # print(i,
-                #       a_ar.span.find('span', 'time_stamp').get_text(strip=True),
-                #       a_en.span.find('span', 'time_stamp').get_text(strip=True),
-                #       a_ar.contents[3].get_text(strip=True),
-                #       a_en.contents[3].get_text(strip=True))
                 csvf.writelines([
-                                # str(i), ',',
-                                 a_ar.span.find('span', 'time_stamp').get_text(strip=True), ',',
-                                 a_ar.contents[3].get_text(strip=True).replace('\n', ' ').replace(',',';'), ',',
-                                 a_en.span.find('span', 'time_stamp').get_text(strip=True), ',',
-                                 a_en.contents[3].get_text(strip=True).replace('\n', ' ').replace(',',';'), ',',
-                                 '\n'])
+                    date_time_components[date_index], ',',
+                    date_time_components[time_index], ',',
+                    a_ar.contents[3].get_text(strip=True).replace('\n', ' ').replace(',', ';'), ',',
+                    # a_en.span.find('span', 'time_stamp').get_text(strip=True), ',',
+                    a_en.contents[3].get_text(strip=True).replace('\n', ' ').replace(',', ';'), ',',
+                    '\n'])
 
 # fetch_all_events(stock_symbol, 14)
 write_csv_for(stock_symbol, 14)

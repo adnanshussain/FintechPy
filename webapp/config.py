@@ -1,6 +1,9 @@
 import os
+import configparser
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+config_ini = configparser.ConfigParser()
+config_ini.read(basedir + '\\config.ini')
 
 class _ConfigBase:
     ###############################
@@ -19,13 +22,10 @@ class _ConfigBase:
     ###############################
     SECRET_KEY = "secret key for session usage"
 
-    ARGAAM_MSSQL_SERVER_IP = '172.16.3.65'
-    ARGAAM_MSSQL_DB_NAME = 'ArgaamPlus'
-    ARGAAM_MSSQL_DB_USER_NAME = 'argaamplususer'
-    ARGAAM_MSSQL_DB_PWD = 'argplus123$'
-    ARGAAM_MSSQL_CONN_STR = 'Driver={SQL Server Native Client 11.0};Server=%s;Database=%s;Uid=%s;Pwd=%s;' \
-                            % (ARGAAM_MSSQL_SERVER_IP, ARGAAM_MSSQL_DB_NAME, ARGAAM_MSSQL_DB_USER_NAME, \
-                               ARGAAM_MSSQL_DB_PWD)
+    ARGAAM_MSSQL_SERVER_IP = config_ini['ARGAAMPLUS QA']['SERVER_IP']
+    ARGAAM_MSSQL_DB_NAME = config_ini['ARGAAMPLUS QA']['DB_NAME']
+    ARGAAM_MSSQL_DB_USER_NAME = config_ini['ARGAAMPLUS QA']['USER_NAME']
+    ARGAAM_MSSQL_DB_PWD = config_ini['ARGAAMPLUS QA']['PWD']
 
 class _DevConfig(_ConfigBase):
     HOST = "0.0.0.0"

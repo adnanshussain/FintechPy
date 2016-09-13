@@ -1,5 +1,7 @@
 # THE REASON THIS FILE IS IN THE ROOT FOLDER IS BECUASE I NEED TO RUN IT INDEPENDENTLY & DIRECTLY FROM THE COMMAND PROMPT
 # AND DUE TO THAT IT FUCKING WELL CANNOT FIND THE webapp IN THE PYTHONPATH IF ITS KEPT A SUBDIRECTORY
+
+#  Ok found a solution. SET PYTHONPATH=%PYTHONPATH%;. then run this file ;)
 import sqlite3, datetime, os
 import webapp.config as config
 from webapp.data_access import _get_open_db_connection, _close_db_connection

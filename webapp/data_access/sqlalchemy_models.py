@@ -108,6 +108,7 @@ class Company(CommonModelBaseMixin, StockModelBaseMixin, AuditModelBaseMixin, db
 
     stock_symbol = Column(String)
     logo_url = Column(String)
+    tc_id = Column(Integer)
     # FK to market
     market_id = Column(Integer, ForeignKey(Market.id))
     market = relationship(Market, backref="companies")
