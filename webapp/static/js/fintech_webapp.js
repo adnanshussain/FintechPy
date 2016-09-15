@@ -94,30 +94,29 @@ function buildAmBarChart(chart, categoryFieldName, valueFieldName, barClickHandl
 }
 
 
-
-
-
-
-
-
-
 function buildFusionChart(categoryFieldName, valueFieldName,get_chart_properties,barClickHandler) {
     var chart_properties={
                     "theme": "fint",
 
                     "caption": get_chart_properties.titles[0].maintext,
                     "subCaption": get_chart_properties.titles[0].subtext,
-                    "captionFontSize": "28",
+                    "captionFontSize": "26",
                     "subcaptionFontSize": "20",
-                    "subcaptionFontBold": "0",
-                    "subCaptionFont": "sans-serif",
+                    "captionFontBold": "1",
+                    "subCaptionFont": "SF-UI-Text-Bold",
+                    "captionFont": "SF-UI-Text-Bold",
+                    "subcaptionFontSize": "26",
 
                     "xAxisName":valueFieldName,
-                    "xAxisNameFontSize" :"18",
+                    "xAxisNameFontSize" :"16",
+                    "xAxisNameFont" :"SF-Compact-Text-Bold",
+                    "xAxisNameFontBold" :"1",
                     "yAxisName": categoryFieldName,
-                    "yAxisNameFontSize" :"18",
+                    "yAxisNameFontSize" :"16",
+                    "yAxisNameFont" :"SF-Compact-Text-Bold",
+                    "yAxisNameFontBold" :"1",
 
-                    "paletteColors": "#ff704d",
+                    "paletteColors": "#ff6600",
 
                     "placeValuesInside": "0",
                     "valueFontColor": "#000000",
@@ -135,35 +134,34 @@ function buildFusionChart(categoryFieldName, valueFieldName,get_chart_properties
                     "toolTipBorderRadius": "2",
                     "toolTipPadding": "5",
 
-                    "plotGradientColor":"#FFFF00",
+                    "plotGradientColor":"#e9af03",
                     "usePlotGradientColor": "1",
 
-                    "trendValueBorderColor": "#123456",
-                    "trendValueBorderDashGap": "3",
+
                     "trendValueFontBold": "1",
                     "trendValueFontSize":"12",
-                    "trendValueBgColor":"#ffa31a",
-                    "trendValueBorderPadding":"5",
-                    "trendValueBgColor":"#ffa31a",
+                    "trendValueFontColor":"#ffffff",
+                    "trendValueBorderPadding":"3",
+                   // "trendValueBgColor":"#e03333",
 
                     "labelFontSize":"12",
                     "labelFontBold":"1",
                     "labelFont":"sans-serif"
 
                 };
-    var data = get_chart_properties.data;
-    var chart_data= [];
-    for (var i=0; i < data.length; i++)
-    {
+        var data = get_chart_properties.data;
+        var chart_data= [];
+        for (var i=0; i < data.length; i++)
+        {
 
-        chart_data.push({
-        label: data[i].short_name_en,
-        value: data[i].frequency,
-        id: data[i].seid
-        });
-    }
+            chart_data.push({
+            label: data[i].short_name_en,
+            value: data[i].frequency,
+            id: data[i].seid
+            });
+        }
 
-    var DrawChart = new FusionCharts({
+        var DrawChart = new FusionCharts({
             type: 'bar2d',
             renderAt: 'chartdiv',
             width: '100%',
@@ -177,10 +175,10 @@ function buildFusionChart(categoryFieldName, valueFieldName,get_chart_properties
                         "line": [
                             {
                                 "startvalue": get_chart_properties.average,
-                                "color": "#ff4000",
-                                "valueOnTop": "1",
+                                "color": "#e03333",
                                 "displayvalue": "Average",
-                                "thickness": "4"
+                                "thickness": "2",
+                                "valueOnTop":"1"
                             }
                         ]
                     }
@@ -188,7 +186,7 @@ function buildFusionChart(categoryFieldName, valueFieldName,get_chart_properties
                 "events": {
                     // Attach to beforeInitialize
                     "initialized": function () {
-                        console.log("Initialized mychart... event called");
+                        //console.log("Initialized mychart... event called");
                     }
                 }
 
