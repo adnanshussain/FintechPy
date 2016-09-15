@@ -855,6 +855,7 @@ a {
 }
 @font-face {
   font-family: 'SF-Compact-Text-Bold';
+
   src: url("../fonts/SF-Compact-Text-Bold.eot");
   src: url("../fonts/SF-Compact-Text-Bold.woff2") format("woff2"), url("../fonts/SF-Compact-Text-Bold.woff") format("woff"), url("../fonts/SF-Compact-Text-Bold.ttf") format("truetype"), url("../fonts/SF-Compact-Text-Bold.svg#SF-Compact-Text-Bold") format("svg"), url("../fonts/SF-Compact-Text-Bold.eot?#iefix") format("embedded-opentype");
   font-weight: normal;
@@ -1219,9 +1220,6 @@ a {
   font-family: "FontAwesome";
   font-size: 15px;
   margin: 13px 0 0 0;
-  position: absolute;
-  bottom: 7px;
-  right: 0;
 }
 .fintech .toolbar a {
   margin-left: 15px;
