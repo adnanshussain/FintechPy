@@ -1,7 +1,6 @@
 import pypyodbc
 
-sql_server_conn_str = 'Driver={SQL Server Native Client 11.0};Server=172.16.3.65;Database=ArgaamPlus;Uid=argaamplususer;Pwd=argplus123$;'
-# sql_server_conn_str = 'Driver={SQL Server Native Client 11.0};Server=172.16.3.51;Database=argaam_analytics;Uid=argplus_user;Pwd=argplus123$;'
+# sql_server_conn_str = 'Driver={SQL Server Native Client 11.0};Server=;Database=;Uid=;Pwd=;'
 
 conn = pypyodbc.connect(sql_server_conn_str)
 

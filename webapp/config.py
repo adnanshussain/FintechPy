@@ -36,10 +36,10 @@ class _DevConfig(_ConfigBase):
     #EXPLAIN_TEMPLATE_LOADING = True
 
 class _ProdConfig(_ConfigBase):
-    ARGAAM_MSSQL_SERVER_IP = '172.16.3.65'
-    ARGAAM_MSSQL_DB_NAME = 'ArgaamPlus'
-    ARGAAM_MSSQL_DB_USER_NAME = 'argaamplususer'
-    ARGAAM_MSSQL_DB_PWD = 'argplus123$'
+    ARGAAM_MSSQL_SERVER_IP = ''
+    ARGAAM_MSSQL_DB_NAME = ''
+    ARGAAM_MSSQL_DB_USER_NAME = ''
+    ARGAAM_MSSQL_DB_PWD = ''
     ARGAAM_MSSQL_CONN_STR = 'Driver={SQL Server Native Client 11.0};Server=%s;Database=%s;Uid=%s;Pwd=%s;' \
                             % (ARGAAM_MSSQL_SERVER_IP, ARGAAM_MSSQL_DB_NAME, ARGAAM_MSSQL_DB_USER_NAME, \
                                ARGAAM_MSSQL_DB_PWD)
