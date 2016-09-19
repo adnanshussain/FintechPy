@@ -1,0 +1,66 @@
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+
+        }
+
+        .y.axis text {
+				font-family: SF-UI-Text-Regular;
+				font-size: 13px;
+				font-weight:bold;
+		}
+
+        .bar {
+                fill: url(#linear-gradient);
+        }
+ 		
+
+       .bar:hover {
+                fill: url(#linear-gradient);;
+                cursor: pointer;
+       }
+
+        .x.axis path {
+            display: none;
+        }
+
+        .graphtitletext {
+            text-anchor: middle;
+            font-family:"SF-UI-Text-Bold";
+            font-weight:Bold;
+            font-size:26px;
+        }
+
+        .bartext {
+            text-anchor: middle;
+            font-weight: bold;
+        }
+
+        .line {
+            fill: none;
+            stroke: #e03333;
+            stroke-width: 3px;
+            /*stroke-opacity: 0.5;*/
+        }
+
+        .avgtxtbox{
+        	fill: #e03333;
+        	/*font-family: "sans-serif";*/
+    		/*font-size: "20px";
+    		fill:"white";*/
+        }
+
+        .avgtxt{
+			/*font-size: 12px;*/
+    		fill:white;
+
+        }
+
+        .xAxisTitle{
+        	text-anchor: middle;
+            font-size: 16px;
+            font-family:"SF-UI-Text-Regular";
+
+        }
