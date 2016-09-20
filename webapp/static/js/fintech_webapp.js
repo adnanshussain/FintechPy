@@ -226,37 +226,35 @@ function buildd3Chart(categoryFieldName, valueFieldName,get_chart_properties,bar
             });
         }
 
-    var barConfig = {
-        barGraphContainerDiv: "chartdiv",
-        height:300,
-        width: $("#chartdiv").width(),
-        margin : {
-            top: 60,
-            bottom: 80,
-            left: 80,
-            right: 50
-        },
-        dataset:chart_data,  //Data Contain Key and Value Format, For Example Value = 2013 & Key = 15, Value = 2014 & Key = 25
-        dataApiUrl: 'http://localhost:61531/api/GraphApi', //Demo Api Url
-        barGraphTitleText:get_chart_properties.titles[0].maintext,
-        barGraphSubTitleText:get_chart_properties.titles[0].subtext,
-        barCssClass: "bar",
-        barTitleClass:"graphtitletext",
-        barTextCssClass: "bartext",
-        xAxisTitleCss:"xAxisTitle",
-        showCategoryLabelVertically: false, //Only Work in Vertical Bar Graph
-        showGraphHorizontally: true,
-        showAverageLine: true,
-        averageLineDataProvider:function(){  return  get_chart_properties.average }, //will run only when showAverageLine property is true.
-        showScale:true, //hide X-axis Scale or if Vertical then Y-Axis Scale
-        onBarClick:function(d) {
-            return barClickHandler(d.id);
+        var barConfig = {
+            barGraphContainerDiv: "chartdiv",
+            height:300,
+            width: $("#chartdiv").width(),
+            margin : {
+                top: 60,
+                bottom: 80,
+                left: 80,
+                right: 50
+            },
+            dataset:chart_data,  //Data Contain Key and Value Format, For Example Value = 2013 & Key = 15, Value = 2014 & Key = 25
+            barGraphTitleText:get_chart_properties.titles[0].maintext,
+            barGraphSubTitleText:get_chart_properties.titles[0].subtext,
+            barCssClass: "bar",
+            barTitleClass:"graphtitletext",
+            barTextCssClass: "bartext",
+            xAxisTitleCss:"xAxisTitle",
+            xScaleClickable:false,
+            yScaleClickable:false,
+            showGraphHorizontally: true,
+            showAverageLine: true,
+            averageLineDataProvider:function(){  return  get_chart_properties.average }, //will run only when showAverageLine property is true.
+            showScale:true, //hide X-axis Scale or if Vertical then Y-Axis Scale
+            onBarClick:function(d) {
+                return barClickHandler(d.id);
+            }
         }
-    }
-     $( "#chartdiv" ).empty();
-     drawBarChart(barConfig);
-
-
+         $( "#chartdiv" ).empty();
+         drawBarChart(barConfig);
 }
 
 function drawBarChart(config){
@@ -290,8 +288,7 @@ function drawBarChart(config){
 
         var g_graph = svg.select("g.scatter");
 
-        var g_bars = g_graph.append("g")
-             				.attr("transform", "translate(" + 0 + "," + 0+ ")");
+        var g_bars = g_graph.append("g");
 
         //Common attributes for Drawing Bar in both Horizontal & Vertical BarGraph
         var drawbar  = g_bars.selectAll("rect")
@@ -302,7 +299,7 @@ function drawBarChart(config){
                          .on('click', config.onBarClick);
 
 
-		    //Common Attributes for Displaying  text(bar value Above each bar) in both Horizontal & Vertical BarGraph
+		//Common Attributes for Displaying  text(bar value Above each bar) in both Horizontal & Vertical BarGraph
         var bartext= g_bars.selectAll("gs.rect")
                     .data(dataset)
                     .enter().append("text")
@@ -336,18 +333,18 @@ function drawBarChart(config){
 			    .attr("stop-color", "#ff6600");
 
         //BarGraph Title
-        svg.append("text")
-            .attr("x", w/ 2)
-            .attr("y", margin.top/2)
-            .attr("class",config.barTitleClass)
-            .append('svg:tspan')
-      		.attr('x', w/ 2)
-      		.attr('dy', 0)
-      		.text(""+config.barGraphTitleText+"")
-      		.append('svg:tspan')
-      		.attr('x', w/ 2)
-      		.attr('dy', margin.top/2)
-      		.text(""+config.barGraphSubTitleText+"");
+            svg.append("text")
+                .attr("x", w/ 2)
+                .attr("y", margin.top/2)
+                .attr("class",config.barTitleClass)
+                .append('svg:tspan')
+                .attr('x', w/ 2)
+                .attr('dy', 0)
+                .text(""+config.barGraphTitleText+"")
+                .append('svg:tspan')
+                .attr('x', w/ 2)
+                .attr('dy', margin.top/2)
+                .text(""+config.barGraphSubTitleText+"");
 
 
         //if showGraphHorizontally property is true then display Graph Horizontally
@@ -389,36 +386,32 @@ function drawBarChart(config){
 	            .text("Number of Days");
 
 
-            //Specific attributes for Drawing x-Scale in Horizontal Formate
+            //Specific attributes for Drawing x-Scale in Horizontal Format
             //will run only when showScale property is true.
             if (config.showScale)
             {
-                //Append properties in drawxAxis variable
-                g.append("g")
-                  .attr("class", "x axis")
-                  .call(xAxis)
-                  .attr("transform", "translate(" + 0 + "," + h + ")")
-                  .on("click", function (d) { alert('clicked!'); });
-
-                // drawxAxis.call(xAxis)
-                //          .attr("transform", "translate(" + 0 + "," + (h + (padding - 20)) + ")");
+               var xAxisProp = g.append("g")
+                                  .attr("class", "x axis")
+                                  .call(xAxis)
+                                  .attr("transform", "translate(" + 0 + "," + h + ")");
+                  if(config.xScaleClickable){
+                    xAxisProp.on("click", function (d) { alert('clicked!'); });
+                  }
             }
 
-            //Specific attributes for Drawing y-Scale in Horizontal Formate
-            g.append("g")
-                  .attr("class", "y axis")
-                  .call(yAxis)
-                  .attr("transform", "translate(" + margin.left + "," + 0+ ")")
-                  .on("click", function (d) { alert('clicked!'); });
-
-
+            //Specific attributes for Drawing y-Scale in Horizontal Format
+                var yAxisProp = g.append("g")
+                                  .attr("class", "y axis")
+                                  .call(yAxis)
+                                  .attr("transform", "translate(" + margin.left + "," + 0+ ")");
+                  if(config.yScaleClickable){
+                    yAxisProp.on("click", function (d) { alert('clicked!'); });
+                  }
 
             //Vertical Average Line
             if(config.showAverageLine)
             {
-
-
-                // //Will Display Avg line
+            //Will Display Avg line
                  var g_avg = svg.append("g")
                  				.attr("transform", "translate("+margin.left +","+ (margin.top +5) +")")
 
